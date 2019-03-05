@@ -71,7 +71,7 @@ def main(feature_type: str, main_dir: str, seq_len: int, batch_size: int, lstm_d
     file_path = os.path.join(main_dir, 'models',
                              f'{feature_type}_len_{seq_len}_lstm_{lstm_dim}.hdf5')
 
-    checkpoint = tf.keras.callbacks.ModelCheckpoint(file_path, monitor='val_acc',
+    checkpoint = tf.keras.callbacks.ModelCheckpoint(file_path, monitor='val_loss',
                                                     save_best_only=True)
     early_stopping = tf.keras.callbacks.EarlyStopping(monitor='val_loss', patience=5)
     callbacks_list = [checkpoint, early_stopping]
