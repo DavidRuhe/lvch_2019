@@ -73,7 +73,7 @@ def main(feature_type: str, main_dir: str, seq_len: int, batch_size: int, lstm_d
 
     checkpoint = tf.keras.callbacks.ModelCheckpoint(file_path, monitor='val_acc',
                                                     save_best_only=True)
-    early_stopping = tf.keras.callbacks.EarlyStopping(monitor='val_acc', patience=5)
+    early_stopping = tf.keras.callbacks.EarlyStopping(monitor='val_loss', patience=5)
     callbacks_list = [checkpoint, early_stopping]
 
     model.fit_generator(
