@@ -4,6 +4,9 @@ from sklearn import utils as skutils
 import numpy as np
 import math
 from collections.abc import Iterable
+import logging
+logger = logging.getLogger()
+logger.setLevel(logging.INFO)
 
 
 class Tokenizer:
@@ -23,7 +26,7 @@ class Tokenizer:
 
         self.num_words = len(self.word_to_ix) + 1
 
-        print(f"Length of tokenizer: {self.num_words}")
+        logger.info(f"Length of tokenizer: {self.num_words}")
 
     def encode(self, texts: Iterable):
         """Encode an array of texts.
@@ -52,12 +55,12 @@ class DataGenerator(tf.keras.utils.Sequence):
         self.encoded = tokenizer.encode([text])[0]
 
         if train:
-            print("Setting up training generator...")
+            logger.info("Setting up training generator...")
 
         else:
-            print("Setting up testing generator...")
+            logger.info("Setting up testing generator...")
 
-        print(f"Length of encoded texts: {len(self.encoded)}")
+        logger.info(f"Length of encoded texts: {len(self.encoded)}")
 
         self.batch_size = batch_size
         self.num_words = tokenizer.num_words
@@ -86,7 +89,7 @@ class DataGenerator(tf.keras.utils.Sequence):
         self.sentences = np.array(sentences).astype(int)
         self.next_words = np.array(next_words).astype(int)
 
-        print(f"Number of sequences: {len(self.sentences)}")
+        logger.info(f"Number of sequences: {len(self.sentences)}")
 
         assert not np.isnan(self.sentences).any()
         assert not np.isnan(self.next_words).any()

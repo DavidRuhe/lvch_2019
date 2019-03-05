@@ -1,6 +1,10 @@
 """When ran, extracts features from bible using BHSA."""
 import os
 from tf.app import use
+import logging
+
+logger = logging.getLogger()
+logger.setLevel(logging.INFO)
 
 MAIN_DIR = './'
 
@@ -14,7 +18,7 @@ def main():
     for i, book_name in enumerate(all_books):
         book_idx = all_books[book_name]
 
-        print(f"Extracting {book_name}...")
+        logger.info(f"Extracting {book_name}...")
 
         b = F.otype.s('book')[book_idx]
         book = []
