@@ -79,7 +79,8 @@ def main(feature_type: str, main_dir: str, seq_len: int, batch_size: int, lstm_d
     model.fit_generator(
         train_generator,
         validation_data=test_generator,
-        callbacks=callbacks_list
+        callbacks=callbacks_list,
+        epochs=256
     )
 
 
