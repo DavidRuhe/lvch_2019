@@ -84,7 +84,7 @@ if __name__ == '__main__':
     parser.add_argument('--batch-size', default=64, type=int)
     parser.add_argument('--lstm-dim', default=128, type=int)
     parser.add_argument('--seq-len', default=64, type=int)
-    parser.add_argument('--character-level', default=str2bool)
+    parser.add_argument('--character-level', default=False, type=str2bool)
 
     args = parser.parse_args()
 
