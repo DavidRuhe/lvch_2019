@@ -18,6 +18,7 @@ def main(feature_type: str, main_dir: str, seq_len: int, batch_size: int, test_b
     lstm_dim: lstm hidden dimension
     character_level: whether tokenizer should be on character level.
     """
+
     texts = get_texts(main_dir, feature_type, character_level)
 
     tokenizer = Tokenizer(texts.values(), character_level=character_level)
@@ -36,7 +37,7 @@ def main(feature_type: str, main_dir: str, seq_len: int, batch_size: int, test_b
                                    with_embedding=True,
                                    train=False)
 
-    # train_generator.sentences = train_generator.sentences[:20000]
+    train_generator.sentences = train_generator.sentences[:20000]
 
     sample_batch = next(iter(train_generator))
 
@@ -82,7 +83,7 @@ if __name__ == '__main__':
     parser.add_argument('--seq-len', default=28, type=int)
     parser.add_argument('--character-level', default=False, type=str2bool)
 
-    args = parser.parse_args([])
+    args = parser.parse_args()
 
     main(args.feature_type, args.main_dir, args.seq_len, args.batch_size,
          args.test_batch_size, args.lstm_dim, args.character_level)
