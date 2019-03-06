@@ -6,6 +6,17 @@ import math
 from collections.abc import Iterable
 import os
 from log import logger
+import argparse
+
+
+def str2bool(v):
+    "Stores boolean in argparse."
+    if v.lower() in ('yes', 'true', 't', 'y', '1'):
+        return True
+    elif v.lower() in ('no', 'false', 'f', 'n', '0'):
+        return False
+    else:
+        raise argparse.ArgumentTypeError('Boolean value expected.')
 
 
 class Tokenizer:
@@ -289,5 +300,5 @@ class GenerateText(tf.keras.callbacks.Callback):
         test_model = load_model(1, self.tokenizer.num_words, stateful=True, batch_size=1)
         if os.path.exists(self.weights_path):
             test_model.load_weights(self.weights_path)
-        generate(self.sample_text, self.tokenizer, self.model, self.length, self.length_seed,
+        generate(self.sample_text, self.tokenizer, test_model, self.length, self.length_seed,
                  1)

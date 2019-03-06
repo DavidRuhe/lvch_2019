@@ -1,7 +1,7 @@
 """Training file."""
 import os
 from log import logger
-from utils import Tokenizer, generate, load_model
+from utils import Tokenizer, generate, load_model, str2bool
 import tensorflow as tf
 import argparse
 import numpy as np
@@ -59,7 +59,7 @@ if __name__ == '__main__':
     parser.add_argument('--batch-size', default=1, type=int)
     parser.add_argument('--lstm-dim', default=128, type=int)
     parser.add_argument('--seq-len', default=1, type=int)
-    parser.add_argument('--character-level', default=False)
+    parser.add_argument('--character-level', default=str2bool)
 
     args = parser.parse_args()
 
