@@ -40,7 +40,7 @@ def main(feature_type: str, main_dir: str, seq_len: int, batch_size: int, lstm_d
                        batch_size=batch_size,
                        stateful=True)
 
-    logger.info(model.summary())
+    print(model.summary())
 
     file_path = os.path.join(main_dir, 'models',
                              f'{feature_type}_lstm_{lstm_dim}.hdf5')
