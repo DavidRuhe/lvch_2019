@@ -1,8 +1,9 @@
 """Training file."""
 import os
 from log import logger
-from utils import Tokenizer, generate, load_model, str2bool, get_texts, DataGenerator
+from utils import Tokenizer, generate_text, lstm_model, str2bool, get_texts, DataGenerator
 import argparse
+import tensorflow as tf
 
 
 def main(feature_type: str, main_dir: str, seq_len: int, batch_size: int, lstm_dim: int,
@@ -22,15 +23,6 @@ def main(feature_type: str, main_dir: str, seq_len: int, batch_size: int, lstm_d
 
     tokenizer = Tokenizer(texts.values(), character_level=character_level)
 
-    model = load_model(seq_len=1,
-                       num_words=tokenizer.num_words,
-                       with_embedding=True,
-                       lstm_dim=lstm_dim,
-                       batch_size=batch_size,
-                       stateful=True)
-
-    print(model.summary())
-
     test_generator = DataGenerator(tokenizer,
                                    tokenizer.full_text,
                                    seq_len=seq_len,
@@ -48,9 +40,15 @@ def main(feature_type: str, main_dir: str, seq_len: int, batch_size: int, lstm_d
 
     logger.info(f"Loading {file_path}")
 
-    model.load_weights(file_path)
 
-    generate(tokenizer, test_generator, model)
+    prediction_model = tf.keras.models.load_model(file_path)
+    # prediction_model = lstm_model(tokenizer.num_words, seq_len=1, \
+    #                                                         batch_size=test_generator.batch_size,
+    #                               stateful=True)
+    # prediction_model.load_weights(file_path)
+
+
+    generate_text(prediction_model, tokenizer, test_generator)
 
 
 if __name__ == '__main__':

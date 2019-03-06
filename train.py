@@ -30,12 +30,14 @@ def main(feature_type: str, main_dir: str, seq_len: int, batch_size: int, lstm_d
                                     with_embedding=True,
                                     train=True)
 
-    test_generator = DataGenerator(tokenizer,
-                                   tokenizer.full_text,
-                                   seq_len=seq_len,
-                                   batch_size=batch_size,
-                                   with_embedding=True,
-                                   train=False)
+#     test_generator = DataGenerator(tokenizer,
+#                                    tokenizer.full_text,
+#                                    seq_len=seq_len,
+#                                    batch_size=batch_size,
+#                                    with_embedding=True,
+#                                    train=False)
+
+    train_generator.sentences = train_generator.sentences[:20000]
 
     sample_batch = next(iter(train_generator))
 
@@ -64,19 +66,31 @@ def main(feature_type: str, main_dir: str, seq_len: int, batch_size: int, lstm_d
             metrics=['sparse_categorical_accuracy'])
         return model
 
-    training_model = lstm_model(seq_len=seq_len, stateful=False)
+    # training_model = lstm_model(seq_len=seq_len, stateful=False)
+    #
+    # training_model.fit_generator(
+    #     train_generator,
+    #     epochs=1,
+    # )
+    #
+    # file_path = os.path.join(main_dir, 'models',
+    #                          f'{feature_type}_lstm_{lstm_dim}.hdf5')
+    #
+    # training_model.save_weights(file_path)
 
-    training_model.fit_generator(
-        train_generator,
-        epochs=1,
-    )
     file_path = os.path.join(main_dir, 'models',
-                             f'{feature_type}_lstm_{lstm_dim}.hdf5')
+                             f'{feature_type}_lstm_{lstm_dim}.h5')
 
-    training_model.save_weights(file_path)
+    BATCH_SIZE = 5
 
-    BATCH_SIZE = 1
     PREDICT_LEN = 250
+
+    test_generator = DataGenerator(tokenizer,
+                                   tokenizer.full_text,
+                                   seq_len=seq_len,
+                                   batch_size=BATCH_SIZE,
+                                   with_embedding=True,
+                                   train=False)
 
     # Keras requires the batch size be specified ahead of time for stateful models.
     # We use a sequence length of 1, as we will be feeding in one character at a
@@ -84,23 +98,40 @@ def main(feature_type: str, main_dir: str, seq_len: int, batch_size: int, lstm_d
     prediction_model = lstm_model(seq_len=1, batch_size=BATCH_SIZE, stateful=True)
     prediction_model.load_weights(file_path)
 
+    for i, k in enumerate(tokenizer.word_to_ix):
+        print(k, tokenizer.word_to_ix[k])
+        if i == 10:
+            break
+
+
     # We seed the model with our initial string, copied BATCH_SIZE times
 
-    rand_idx = np.random.randint(0, len(train_generator))
-    seed = test_generator[rand_idx]
+    while True:
+        rand_idx = np.random.randint(1, len(train_generator))
+
+        seed = test_generator[rand_idx][0]
+        print(seed.shape)
+        print(rand_idx)
+
+        if seed.shape[0] > 0:
+            break
 
     correct = 0
     # First, run the seed forward to prime the state of the model.
     prediction_model.reset_states()
-    for i in range(len(seed.shape[1]) - 1):
+    for i in range(seed.shape[1] - 1):
+        print(seed[:, i: i + 1].shape)
+
         next_probits = prediction_model.predict(seed[:, i:i + 1])
+        print(next_probits)
+        print(next_probits.shape)
         next_probits = next_probits[:, 0, :]
         pred = np.argmax(next_probits, axis=-1)
         y = seed[:, i + 1]
 
         correct += (y == pred).sum()
 
-    print(f"Accuracy: {100 * correct / (len(seed.shape[1]) * BATCH_SIZE):.2f}%.")
+    print(f"Accuracy: {100 * correct / (seed.shape[1] * BATCH_SIZE):.2f}%.")
 
     # Now we can accumulate predictions!
     predictions = [seed[:, -1:]]
@@ -118,7 +149,7 @@ def main(feature_type: str, main_dir: str, seq_len: int, batch_size: int, lstm_d
 
         # sample from our output distribution
         next_idx = [
-            np.random.choice(256, p=next_probits[i])
+            np.random.choice(tokenizer.num_words, p=next_probits[i])
             for i in range(BATCH_SIZE)
         ]
         predictions.append(np.asarray(next_idx, dtype=np.int32))
@@ -126,11 +157,9 @@ def main(feature_type: str, main_dir: str, seq_len: int, batch_size: int, lstm_d
     for i in range(BATCH_SIZE):
         print('PREDICTION %d\n\n' % i)
         p = [predictions[j][i] for j in range(PREDICT_LEN)]
-        generated = ''.join([chr(c) for c in p])
+        generated = tokenizer.decode(p)
         print(generated)
         print()
-        assert len(generated) == PREDICT_LEN, 'Generated text too short'
-
 
     # model = load_model(seq_len,
     #                    tokenizer.num_words,
@@ -166,7 +195,7 @@ if __name__ == '__main__':
     parser.add_argument('--seq-len', default=28, type=int)
     parser.add_argument('--character-level', default=False, type=str2bool)
 
-    args = parser.parse_args()
+    args = parser.parse_args([])
 
     main(args.feature_type, args.main_dir, args.seq_len, args.batch_size, args.lstm_dim,
          args.character_level)

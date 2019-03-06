@@ -44,20 +44,29 @@ class Tokenizer:
     """from tensorflow.keras.utils import to_categorical, Sequence"""
     def __init__(self, texts: Iterable, character_level: bool = False):
         self.texts = texts
+        print(list(texts)[0].split()[:20])
         self.full_text = "".join(texts)
+
         self.character_level = character_level
 
         logger.info(f"Full text sample: {self.full_text[:32]}")
 
         if character_level:
-            self.word_to_ix = {word: i for i, word in enumerate(set(self.full_text))}
-            self.ix_to_word = {i: word for i, word in enumerate(set(self.full_text))}
+            self.word_to_ix = {word: i for i, word in enumerate(sorted(set(self.full_text)))}
+            self.ix_to_word = {i: word for i, word in enumerate(sorted(set(self.full_text)))}
 
         else:
-            self.word_to_ix = {word: i for i, word in enumerate(set(self.full_text.split()))}
-            self.ix_to_word = {i: word for i, word in enumerate(set(self.full_text.split()))}
+            self.word_to_ix = {word: i for i, word in enumerate(sorted(set(
+                self.full_text.split())))}
+            self.ix_to_word = {i: word for i, word in enumerate(sorted(set(
+                self.full_text.split())))}
 
-        self.num_words = len(self.word_to_ix) + 1
+        self.num_words = len(self.word_to_ix)
+
+        for i, k in enumerate(self.word_to_ix):
+            print(k, self.word_to_ix[k])
+            if i == 10:
+                break
 
         logger.info(f"Length of tokenizer: {self.num_words}")
 
@@ -230,6 +239,25 @@ class DataGenerator(tf.keras.utils.Sequence):
 #
 #     return model
 
+def lstm_model(num_words, seq_len=100, batch_size=None, stateful=True):
+    """Language model: predict the next word given the current word."""
+    source = tf.keras.Input(
+        name='seed', shape=(seq_len,), batch_size=batch_size, dtype=tf.int32)
+
+    embedding = tf.keras.layers.Embedding(input_dim=num_words, output_dim=512)(source)
+    lstm_1 = tf.keras.layers.LSTM(512, stateful=stateful, return_sequences=True)(
+        embedding)
+    lstm_2 = tf.keras.layers.LSTM(512, stateful=stateful, return_sequences=True)(
+        lstm_1)
+    predicted_char = tf.keras.layers.TimeDistributed(
+        tf.keras.layers.Dense(num_words, activation='softmax'))(lstm_2)
+    model = tf.keras.Model(inputs=[source], outputs=[predicted_char])
+    model.compile(
+        optimizer=tf.train.RMSPropOptimizer(learning_rate=0.01),
+        loss='sparse_categorical_crossentropy',
+        metrics=['sparse_categorical_accuracy'])
+    return model
+
 
 def load_model(seq_len, num_words, batch_size=None, embedding_dim=300, lstm_dim=128, stateful=False,
                with_embedding=True):
@@ -250,75 +278,66 @@ def load_model(seq_len, num_words, batch_size=None, embedding_dim=300, lstm_dim=
       metrics=['sparse_categorical_accuracy'])
     return model
 
+def generate_text(model, tokenizer, generator, predict_len=256):
 
-def generate(tokenizer, data_generator, model):
-    """
-    Parameters
-    ----------
-    tokenizer: tokenizer that the model uses
-    model: model to predict
-    length: length of the predictions.
-    data_generator: generator draw seeds from.
 
-    Returns
-    -------
+    # We seed the model with our initial string, copied BATCH_SIZE times
 
-    """
 
-    rand_idx = np.random.randint(0, len(data_generator))
+    while True:
+        rand_idx = np.random.randint(1, len(generator))
 
-    seeds = data_generator[rand_idx][0]
+        seed = generator[rand_idx][0]
+        print(seed.shape)
+        print(rand_idx)
 
-    print(f"Seed shape {seeds.shape}")
+        if seed.shape[0] > 0:
+            break
 
-    print(f"Example seed: {tokenizer.decode(seeds[0])}")
-
-    length_seed = seeds.shape[1]
-    number_of_seeds = seeds.shape[0]
     correct = 0
-    # Prime the model.
-    for i in range(length_seed - 1):
-        batch_in = seeds[:, i: i + 1]
+    # First, run the seed forward to prime the state of the model.
+    model.reset_states()
+    for i in range(seed.shape[1] - 1):
+        print(seed[:, i: i + 1].shape)
 
-        print('in', batch_in)
-
-        print(batch_in.shape)
-
-        print(model.summary())
-
-        y_ = model.predict(batch_in)[:, 0, :]
-
-        print(y_.shape)
-
-        pred = np.argmax(y_, axis=-1)
-
-        print('pred', pred)
-
-        y = seeds[:, i + 1]
-
-        print('true', y)
+        next_probits = model.predict(seed[:, i:i + 1])
+        print(next_probits)
+        print(next_probits.shape)
+        next_probits = next_probits[:, 0, :]
+        pred = np.argmax(next_probits, axis=-1)
+        y = seed[:, i + 1]
 
         correct += (y == pred).sum()
 
-        break
+    print(f"Accuracy: {100 * correct / (seed.shape[1] * generator.batch_size):.2f}%.")
 
-    print(f"Accuracy: {100 * correct / (length_seed * number_of_seeds):.2f}%.")
+    # Now we can accumulate predictions!
+    predictions = [seed[:, -1:]]
+    correct = 0
+    for i in range(predict_len):
+        last_word = predictions[-1]
+        next_probits = model.predict(last_word)
 
-    predictions = [seeds[:, -1:]]
-    #
-    # for i in range(length):
-    #     last_word = predictions[-1]
-    #
-    #     next_probits = model.predict(last_word)[:, 0, :]
-    #
-    #     next_idx = [np.random.choice(tokenizer.num_words, p=next_probits[j]) for j in
-    #                 range(number_of_seeds)]
-    #
-    #     predictions.append(np.asarray(next_idx)[:, np.newaxis])
-    #
-    # print("Predicted texts:\n")
-    # for i in range(number_of_seeds):
-    #     print(tokenizer.decode([prediction[i] for prediction in predictions]), '\n')
+        print(next_probits.shape)
+
+        next_probits = next_probits[:, 0, :]
+        print(next_probits.shape)
+
+        pred = np.argmax(next_probits, axis=-1)
+
+        # sample from our output distribution
+        next_idx = [
+            np.random.choice(tokenizer.num_words, p=next_probits[i])
+            for i in range(generator.batch_size)
+        ]
+        predictions.append(np.asarray(next_idx, dtype=np.int32))
+
+    for i in range(generator.batch_size):
+        print('PREDICTION %d\n\n' % i)
+        p = [predictions[j][i] for j in range(generator.batch_size)]
+        generated = tokenizer.decode(p)
+        print(generated)
+        print()
 
 
 class GenerateText(tf.keras.callbacks.Callback):
