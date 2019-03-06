@@ -64,11 +64,12 @@ def main(feature_type: str, main_dir: str, seq_len: int, batch_size: int, test_b
     early_stopping = tf.keras.callbacks.EarlyStopping(monitor='val_loss', patience=5)
 
     generate_text = GenerateText(test_generator, tokenizer, file_path)
-    # callbacks_list = [checkpoint, early_stopping, generate_text]
+    callbacks_list = [checkpoint, early_stopping, generate_text]
 
     training_model.fit_generator(
         train_generator,
         validation_data=test_generator,
+        callbacks=callbacks_list,
         epochs=256
     )
 
