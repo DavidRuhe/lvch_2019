@@ -5,6 +5,7 @@ import numpy as np
 import math
 from collections.abc import Iterable
 import logging
+import os
 logger = logging.getLogger()
 logger.setLevel(logging.INFO)
 
@@ -45,6 +46,24 @@ class Tokenizer:
 
         else:
             return tuple([self.word_to_ix[word] for word in text.split()] for text in texts)
+
+    def decode(self, encoded: Iterable):
+        """Decode an array of integers.
+
+        Parameters
+        ----------
+        encoded: Iterable
+            List of integers to encode
+
+        Returns
+        -------
+            String of decoded text
+        """
+        if self.character_level:
+            return "".join(self.ix_to_word[int(ix)] for ix in encoded)
+
+        else:
+            return " ".join(self.ix_to_word[int(ix)] for ix in encoded)
 
 
 class DataGenerator(tf.keras.utils.Sequence):
@@ -147,7 +166,7 @@ def load_model(seq_len: int,
     """
 
     if with_embedding:
-        batch_in = tf.keras.layers.Input(name='seed', shape=(seq_len,))
+        batch_in = tf.keras.layers.Input(name='seed', shape=(seq_len,), batch_size=batch_size)
 
     else:
         batch_in = tf.keras.layers.Input(name='seed', shape=(seq_len, num_words),
@@ -185,3 +204,90 @@ def load_model(seq_len: int,
         metrics=['sparse_categorical_accuracy'])
 
     return model
+
+
+def generate(sample_text, tokenizer, model, length=128, length_seed=16, number_of_seeds=1):
+    """
+    Parameters
+    ----------
+    sample_text: Text to sample seeds from
+    tokenizer: tokenizer that the model uses
+    model: model to predict
+    length: length of the predictions.
+    length_seed: length of the seed that primes the model.
+    number_of_seeds: number of predictions to do.
+
+    Returns
+    -------
+
+    """
+
+    sample_text = sample_text.split()
+
+    rand_idx = np.random.randint(0, len(sample_text), number_of_seeds)
+
+    seeds = [' '.join(sample_text[i: i + length_seed]) for i in rand_idx]
+
+    seeds_encoded = np.array(tokenizer.encode(seeds))
+
+    correct = 0
+
+    # Prime the model.
+    for i in range(length_seed - 1):
+        batch_in = seeds_encoded[:, i: i + 1]
+
+        y_ = model.predict(batch_in)
+
+        pred = np.argmax(y_, axis=-1)
+
+        y = seeds_encoded[:, i + 1]
+
+        correct += (y == pred).sum()
+
+    print(f"Accuracy: {100 * correct / (length_seed * number_of_seeds):.2f}%.")
+
+    predictions = [seeds_encoded[:, -1:]]
+
+    for i in range(length):
+        last_word = predictions[-1]
+
+        next_probits = model.predict(last_word).squeeze(0)
+
+        next_idx = [np.random.choice(tokenizer.num_words, p=next_probits[j]) for j in
+                    range(number_of_seeds)]
+
+        predictions.append(np.asarray(next_idx)[:, np.newaxis])
+
+    print("Predicted texts:\n")
+    for i in range(number_of_seeds):
+        print(tokenizer.decode([prediction[i] for prediction in predictions]), '\n')
+
+
+class GenerateText(tf.keras.callbacks.Callback):
+    """Keras callback to generate text."""
+    def __init__(self, sample_text, tokenizer, weights_path, length=128,
+                 length_seed=16):
+
+        super(GenerateText, self).__init__()
+
+        self.sample_text = sample_text
+        self.tokenizer = tokenizer
+        self.length = length
+        self.length_seed = length_seed
+        self.weights_path = weights_path
+
+    def on_train_begin(self, *args, **kwargs):
+        """Generates text at the beginning of an epoch."""
+        test_model = load_model(1, self.tokenizer.num_words, stateful=True, batch_size=1)
+        if os.path.exists(self.weights_path):
+            test_model.load_weights(self.weights_path)
+        generate(self.sample_text, self.tokenizer, test_model, self.length, self.length_seed,
+                 1)
+
+    def on_epoch_end(self, *args, **kwargs):
+        """Generates text at the end of epoch."""
+        test_model = load_model(1, self.tokenizer.num_words, stateful=True, batch_size=1)
+        if os.path.exists(self.weights_path):
+            test_model.load_weights(self.weights_path)
+        generate(self.sample_text, self.tokenizer, self.model, self.length, self.length_seed,
+                 1)
