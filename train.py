@@ -51,6 +51,11 @@ def main(feature_type: str, main_dir: str, seq_len: int, batch_size: int, lstm_d
                                    with_embedding=True,
                                    train=False)
 
+    sample_batch = next(iter(train_generator))
+
+    logger.info(f"X batch shape: {sample_batch[0].shape}, y batch shape: {sample_batch[1].shape}")
+    logger.info(f"Sample batch text: {tokenizer.decode(sample_batch[0][0])}")
+
     model = load_model(seq_len,
                        tokenizer.num_words,
                        with_embedding=True,

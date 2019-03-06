@@ -129,7 +129,7 @@ class DataGenerator(tf.keras.utils.Sequence):
         i = idx * self.batch_size
 
         x_batch = self.sentences[i: i + self.batch_size]
-        y_batch = self.sentences[i: i + self.batch_size]
+        y_batch = self.next_words[i: i + self.batch_size]
         y_batch = y_batch[:, :, np.newaxis]
 
         if not self.with_embedding:
@@ -217,7 +217,7 @@ def load_model(seq_len: int,
     return model
 
 
-def generate(sample_text, tokenizer, model, length=128, length_seed=16, number_of_seeds=1):
+def generate(sample_text, tokenizer, model, length=128, length_seed=64, number_of_seeds=1):
     """
     Parameters
     ----------
@@ -242,16 +242,24 @@ def generate(sample_text, tokenizer, model, length=128, length_seed=16, number_o
     seeds_encoded = np.array(tokenizer.encode(seeds))
 
     correct = 0
-
+    model.reset_states()
     # Prime the model.
     for i in range(length_seed - 1):
         batch_in = seeds_encoded[:, i: i + 1]
 
-        y_ = model.predict(batch_in)
+        print('in', batch_in)
+
+        y_ = model.predict(batch_in)[:, 0, :]
+
+        print(y_.shape)
 
         pred = np.argmax(y_, axis=-1)
 
+        print('pred', pred)
+
         y = seeds_encoded[:, i + 1]
+
+        print('true', y)
 
         correct += (y == pred).sum()
 
@@ -262,7 +270,7 @@ def generate(sample_text, tokenizer, model, length=128, length_seed=16, number_o
     for i in range(length):
         last_word = predictions[-1]
 
-        next_probits = model.predict(last_word).squeeze(0)
+        next_probits = model.predict(last_word)[:, 0, :]
 
         next_idx = [np.random.choice(tokenizer.num_words, p=next_probits[j]) for j in
                     range(number_of_seeds)]
@@ -277,7 +285,7 @@ def generate(sample_text, tokenizer, model, length=128, length_seed=16, number_o
 class GenerateText(tf.keras.callbacks.Callback):
     """Keras callback to generate text."""
     def __init__(self, sample_text, tokenizer, weights_path, length=128,
-                 length_seed=16):
+                 length_seed=32):
 
         super(GenerateText, self).__init__()
 
