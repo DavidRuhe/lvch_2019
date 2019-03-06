@@ -1,3 +1,4 @@
+"""Import a logger and set logging levels correcty."""
 import logging
 import sys
 # Create logger

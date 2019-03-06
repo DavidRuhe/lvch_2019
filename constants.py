@@ -1,3 +1,4 @@
+"""Constants used across the project."""
 SELECTED_BOOKS = ['genesis',
                   'exodus',
                   'leviticus',

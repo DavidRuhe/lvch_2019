@@ -38,9 +38,6 @@ def main(feature_type: str, main_dir: str, seq_len: int, batch_size: int, test_b
                                    with_embedding=True,
                                    train=False)
 
-    train_generator.sentences = train_generator.sentences[:20000]
-    test_generator.sentences = test_generator.sentences[:200]
-
     sample_batch = next(iter(train_generator))
 
     logger.info(f"X batch shape: {sample_batch[0].shape}, y batch shape: {sample_batch[1].shape}")
@@ -49,11 +46,6 @@ def main(feature_type: str, main_dir: str, seq_len: int, batch_size: int, test_b
     training_model = lstm_model(num_words=tokenizer.num_words,
                                 seq_len=seq_len,
                                 stateful=False)
-
-    # training_model.fit_generator(
-    #     train_generator,
-    #     epochs=1,
-    # )
 
     file_path = os.path.join(main_dir, 'models',
                              f'{feature_type}_lstm_{lstm_dim}.h5')
