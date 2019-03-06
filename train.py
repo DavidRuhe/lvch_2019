@@ -64,7 +64,7 @@ def main(feature_type: str, main_dir: str, seq_len: int, batch_size: int, lstm_d
             metrics=['sparse_categorical_accuracy'])
         return model
 
-    training_model = lstm_model(seq_len=seq_len, batch_size=batch_size, stateful=False)
+    training_model = lstm_model(seq_len=seq_len, stateful=False)
 
     training_model.fit_generator(
         train_generator,
