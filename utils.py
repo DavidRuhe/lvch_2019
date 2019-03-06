@@ -11,7 +11,19 @@ import argparse
 import string
 
 
-def get_texts(main_dir, feature_type, character_level):
+def get_texts(main_dir: str, feature_type: str, character_level: bool):
+    """Load texts from corpus folder.
+    Parameters
+    ----------
+    main_dir: base directory of project
+    feature_type: which corpus to read.
+    character_level: whether the model is on character level.
+
+    Returns
+    -------
+    type: dictionary
+        dictionary with name: text.
+    """
     texts = {}
 
     for book in SELECTED_BOOKS:
@@ -173,84 +185,33 @@ class DataGenerator(tf.keras.utils.Sequence):
         return math.ceil(len(self.sentences) / self.batch_size)
 
 
-# def load_model(seq_len: int,
-#                num_words: int,
-#                with_embedding: bool = True,
-#                stateful: bool = False,
-#                batch_size: int = None,
-#                lstm_dim: int = 128,
-#                embedding_dim: int = 300,
-#                return_state: bool = False):
-#
-#     """Loads a tf.keras LSTM model.
-#     Parameters
-#     ----------
-#     seq_len: length of sequences
-#     num_words: number of words in tokenizer
-#     with_embedding: use an embedding layer
-#     stateful: remember the state after forward pass
-#     batch_size: batch size
-#     lstm_dim: lstm hidden dimension
-#     embedding_dim: embedding dimension
-#     return_state: return hidden state
-#
-#     Returns
-#     -------
-#     tf.keras LSTM model.
-#     """
-#
-#     if with_embedding:
-#         batch_in = tf.keras.layers.Input(name='seed', shape=(seq_len,), batch_size=batch_size)
-#
-#     else:
-#         batch_in = tf.keras.layers.Input(name='seed', shape=(seq_len, num_words),
-#                                          batch_size=batch_size)
-#
-#     if with_embedding:
-#         embedding = tf.keras.layers.Embedding(input_dim=num_words, output_dim=embedding_dim,
-#                                               input_length=seq_len, batch_size=batch_size)(batch_in)
-#
-#     else:
-#         embedding = batch_in
-#
-#     if return_state:
-#         lstm, hf, cf, hb, cb = tf.keras.layers.Bidirectional(tf.keras.layers.LSTM(
-#             units=lstm_dim, return_state=return_state, stateful=stateful, return_sequences=True))(
-#             embedding)
-#         dense = tf.keras.layers.TimeDistributed(tf.keras.layers.Dense(
-#             num_words, activation='softmax'))(lstm)
-#
-#         model = tf.keras.Model([batch_in], [dense, hf, cf, hb, cb])
-#
-#     else:
-#         lstm = tf.keras.layers.Bidirectional(
-#             tf.keras.layers.LSTM(units=lstm_dim, return_state=return_state,
-#                                  stateful=stateful, return_sequences=True))(embedding)
-#
-#         dense = tf.keras.layers.TimeDistributed(tf.keras.layers.Dense(
-#             num_words, activation='softmax'))(lstm)
-#
-#         model = tf.keras.Model([batch_in], [dense])
-#
-#     model.compile(
-#         optimizer='adam',
-#         loss='sparse_categorical_crossentropy',
-#         metrics=['sparse_categorical_accuracy'])
-#
-#     return model
+def lstm_model(num_words: int,
+               seq_len: int = 64,
+               batch_size=None,
+               stateful: bool = True,
+               embedding_dim: int = 300):
+    """Language model: predict the next word given the current word.
+    Parameters
+    ----------
+    num_words: num words in corpus
+    seq_len: sequence length
+    batch_size: batch size
+    stateful: whether to retain states after prediction
+    embedding_dim: dimension of embedding layer.
 
-def lstm_model(num_words, seq_len=100, batch_size=None, stateful=True):
-    """Language model: predict the next word given the current word."""
+    Returns
+    -------
+    type: tf.keras.Model
+        The language model
+    """
     source = tf.keras.Input(
         name='seed', shape=(seq_len,), batch_size=batch_size, dtype=tf.int32)
 
-    embedding = tf.keras.layers.Embedding(input_dim=num_words, output_dim=512)(source)
-    lstm_1 = tf.keras.layers.LSTM(512, stateful=stateful, return_sequences=True)(
+    embedding = tf.keras.layers.Embedding(input_dim=num_words, output_dim=embedding_dim)(source)
+    lstm = tf.keras.layers.LSTM(embedding_dim, stateful=stateful, return_sequences=True)(
         embedding)
-    lstm_2 = tf.keras.layers.LSTM(512, stateful=stateful, return_sequences=True)(
-        lstm_1)
     predicted_char = tf.keras.layers.TimeDistributed(
-        tf.keras.layers.Dense(num_words, activation='softmax'))(lstm_2)
+        tf.keras.layers.Dense(num_words, activation='softmax'))(lstm)
     model = tf.keras.Model(inputs=[source], outputs=[predicted_char])
     model.compile(
         optimizer=tf.train.RMSPropOptimizer(learning_rate=0.01),
@@ -259,73 +220,44 @@ def lstm_model(num_words, seq_len=100, batch_size=None, stateful=True):
     return model
 
 
-def load_model(seq_len, num_words, batch_size=None, embedding_dim=300, lstm_dim=128, stateful=False,
-               with_embedding=True):
-    """Language model: predict the next word given the current word."""
-
-    source = tf.keras.Input(
-      name='seed', shape=(seq_len,), batch_size=batch_size, dtype=tf.int32)
-
-    embedding = tf.keras.layers.Embedding(input_dim=num_words, output_dim=embedding_dim)(source)
-    lstm_1 = tf.keras.layers.LSTM(lstm_dim, stateful=stateful, return_sequences=True)(embedding)
-    lstm_2 = tf.keras.layers.LSTM(lstm_dim, stateful=stateful, return_sequences=True)(lstm_1)
-    predicted_char = tf.keras.layers.TimeDistributed(tf.keras.layers.Dense(num_words,
-                                                                         activation='softmax'))(lstm_2)
-    model = tf.keras.Model(inputs=[source], outputs=[predicted_char])
-    model.compile(
-      optimizer=tf.train.RMSPropOptimizer(learning_rate=0.01),
-      loss='sparse_categorical_crossentropy',
-      metrics=['sparse_categorical_accuracy'])
-    return model
-
 def generate_text(model, tokenizer, generator, predict_len=256):
+    """Generating text with the language model.
 
+    Parameters
+    ----------
+    model: language model
+    tokenizer: tokenizer
+    generator: test generator
+    predict_len: length of text to predict
 
-    # We seed the model with our initial string, copied BATCH_SIZE times
+    Returns
+    -------
 
+    """
+    rand_idx = np.random.randint(1, len(generator))
+    seed = generator[rand_idx][0]
 
-    while True:
-        rand_idx = np.random.randint(1, len(generator))
-
-        seed = generator[rand_idx][0]
-        print(seed.shape)
-        print(rand_idx)
-
-        if seed.shape[0] > 0:
-            break
+    assert seed.shape[0] > 0
 
     correct = 0
     # First, run the seed forward to prime the state of the model.
     model.reset_states()
     for i in range(seed.shape[1] - 1):
-        print(seed[:, i: i + 1].shape)
-
         next_probits = model.predict(seed[:, i:i + 1])
-        print(next_probits)
-        print(next_probits.shape)
         next_probits = next_probits[:, 0, :]
         pred = np.argmax(next_probits, axis=-1)
         y = seed[:, i + 1]
-
         correct += (y == pred).sum()
 
     print(f"Accuracy: {100 * correct / (seed.shape[1] * generator.batch_size):.2f}%.")
 
-    # Now we can accumulate predictions!
     predictions = [seed[:, -1:]]
-    correct = 0
     for i in range(predict_len):
         last_word = predictions[-1]
         next_probits = model.predict(last_word)
 
-        print(next_probits.shape)
-
         next_probits = next_probits[:, 0, :]
-        print(next_probits.shape)
 
-        pred = np.argmax(next_probits, axis=-1)
-
-        # sample from our output distribution
         next_idx = [
             np.random.choice(tokenizer.num_words, p=next_probits[i])
             for i in range(generator.batch_size)
@@ -333,11 +265,11 @@ def generate_text(model, tokenizer, generator, predict_len=256):
         predictions.append(np.asarray(next_idx, dtype=np.int32))
 
     for i in range(generator.batch_size):
-        print('PREDICTION %d\n\n' % i)
+        print(f'\nGenerated text {i}:\n')
         p = [predictions[j][i] for j in range(generator.batch_size)]
         generated = tokenizer.decode(p)
+        generated = generated.replace('eos', '\n')
         print(generated)
-        print()
 
 
 class GenerateText(tf.keras.callbacks.Callback):
@@ -353,19 +285,20 @@ class GenerateText(tf.keras.callbacks.Callback):
 
     def on_train_begin(self, *args, **kwargs):
         """Generates text at the beginning of an epoch."""
-        test_model = load_model(seq_len=1, num_words=self.tokenizer.num_words, stateful=True,
+        test_model = lstm_model(num_words=self.tokenizer.num_words, stateful=True,
                                 batch_size=self.batch_size)
 
         if os.path.exists(self.weights_path):
             test_model.load_weights(self.weights_path)
-        generate(self.tokenizer, self.generator, test_model)
+
+        generate_text(test_model, self.tokenizer, self.generator)
 
     def on_epoch_end(self, *args, **kwargs):
         """Generates text at the end of epoch."""
 
-        print('hi')
-        print(self.batch_size)
-        test_model = load_model(1, self.tokenizer.num_words, stateful=True, batch_size=self.batch_size)
-        test_model.load_weights(self.weights_path)
-        generate(self.sample_text, self.tokenizer, test_model)
+        test_model = lstm_model(num_words=self.tokenizer.num_words, stateful=True,
+                                batch_size=self.batch_size)
 
+        test_model.load_weights(self.weights_path)
+
+        generate_text(test_model, self.tokenizer, self.generator)

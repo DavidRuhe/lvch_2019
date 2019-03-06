@@ -3,7 +3,6 @@ import os
 from log import logger
 from utils import Tokenizer, generate_text, lstm_model, str2bool, get_texts, DataGenerator
 import argparse
-import tensorflow as tf
 
 
 def main(feature_type: str, main_dir: str, seq_len: int, batch_size: int, lstm_dim: int,
@@ -36,17 +35,16 @@ def main(feature_type: str, main_dir: str, seq_len: int, batch_size: int, lstm_d
     logger.info(f"Sample batch text: {tokenizer.decode(sample_batch[0][0])}")
 
     file_path = os.path.join(main_dir, 'models',
-                             f'{feature_type}_lstm_{lstm_dim}.hdf5')
+                             f'{feature_type}_lstm_{lstm_dim}.h5')
 
     logger.info(f"Loading {file_path}")
 
+    prediction_model = lstm_model(num_words=tokenizer.num_words,
+                                  seq_len=1,
+                                  batch_size=test_generator.batch_size,
+                                  stateful=True)
 
-    prediction_model = tf.keras.models.load_model(file_path)
-    # prediction_model = lstm_model(tokenizer.num_words, seq_len=1, \
-    #                                                         batch_size=test_generator.batch_size,
-    #                               stateful=True)
-    # prediction_model.load_weights(file_path)
-
+    prediction_model.load_weights(file_path)
 
     generate_text(prediction_model, tokenizer, test_generator)
 
