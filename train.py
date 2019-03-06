@@ -77,7 +77,7 @@ if __name__ == '__main__':
     parser.add_argument('--feature-type', default='english', type=str)
     parser.add_argument('--main-dir', default='./', type=str)
     parser.add_argument('--batch-size', default=64, type=int)
-    parser.add_argument('--batch-test-size', default=8, type=int)
+    parser.add_argument('--test-batch-size', default=8, type=int)
     parser.add_argument('--lstm-dim', default=128, type=int)
     parser.add_argument('--seq-len', default=28, type=int)
     parser.add_argument('--character-level', default=False, type=str2bool)

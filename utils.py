@@ -56,7 +56,6 @@ class Tokenizer:
     """from tensorflow.keras.utils import to_categorical, Sequence"""
     def __init__(self, texts: Iterable, character_level: bool = False):
         self.texts = texts
-        print(list(texts)[0].split()[:20])
         self.full_text = "".join(texts)
 
         self.character_level = character_level
@@ -74,11 +73,6 @@ class Tokenizer:
                 self.full_text.split())))}
 
         self.num_words = len(self.word_to_ix)
-
-        for i, k in enumerate(self.word_to_ix):
-            print(k, self.word_to_ix[k])
-            if i == 10:
-                break
 
         logger.info(f"Length of tokenizer: {self.num_words}")
 
