@@ -4,6 +4,7 @@ import logging
 from utils import Tokenizer, DataGenerator, load_model, GenerateText
 import tensorflow as tf
 import argparse
+import string
 
 from constants import SELECTED_BOOKS
 
@@ -29,9 +30,16 @@ def main(feature_type: str, main_dir: str, seq_len: int, batch_size: int, lstm_d
         path = os.path.join(main_dir, 'corpora', f'{feature_type}', f'{book}.txt')
 
         with open(path, 'rb') as f:
-            texts[book] = f.read().decode()
+
+            text = f.read().decode()
+
+            if not character_level:
+                text = text.translate(str.maketrans('', '', string.punctuation))
+
+            texts[book] = text
 
     full_text = ''.join(texts.values())
+
     tokenizer = Tokenizer(texts.values(), character_level=character_level)
 
     train_generator = DataGenerator(tokenizer,
@@ -76,7 +84,7 @@ def main(feature_type: str, main_dir: str, seq_len: int, batch_size: int, lstm_d
 
 if __name__ == '__main__':
     parser = argparse.ArgumentParser()
-    parser.add_argument('--feature-type', default='word', type=str)
+    parser.add_argument('--feature-type', default='english', type=str)
     parser.add_argument('--main-dir', default='./', type=str)
     parser.add_argument('--batch-size', default=64, type=int)
     parser.add_argument('--lstm-dim', default=128, type=int)
