@@ -39,6 +39,7 @@ def main(feature_type: str, main_dir: str, seq_len: int, batch_size: int, test_b
                                    train=False)
 
     train_generator.sentences = train_generator.sentences[:20000]
+    test_generator.sentences = test_generator.sentences[:200]
 
     sample_batch = next(iter(train_generator))
 
