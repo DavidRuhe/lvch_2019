@@ -82,7 +82,7 @@ def main(feature_type: str, main_dir: str, seq_len: int, batch_size: int, lstm_d
     # We use a sequence length of 1, as we will be feeding in one character at a
     # time and predicting the next character.
     prediction_model = lstm_model(seq_len=1, batch_size=BATCH_SIZE, stateful=True)
-    prediction_model.load_weights('/tmp/bard.h5')
+    prediction_model.load_weights(file_path)
 
     # We seed the model with our initial string, copied BATCH_SIZE times
 
