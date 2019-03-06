@@ -54,10 +54,9 @@ def main(feature_type: str, main_dir: str, seq_len: int, batch_size: int, lstm_d
     model = load_model(seq_len,
                        tokenizer.num_words,
                        with_embedding=True,
-                       lstm_dim=lstm_dim,
-                       batch_size=batch_size)
+                       lstm_dim=lstm_dim)
 
-    logger.info(model.summary())
+    print(model.summary())
 
     file_path = os.path.join(main_dir, 'models',
                              f'{feature_type}_lstm_{lstm_dim}.hdf5')

@@ -154,7 +154,7 @@ def load_model(seq_len: int,
                num_words: int,
                with_embedding: bool = True,
                stateful: bool = False,
-               batch_size: int = 512,
+               batch_size: int = None,
                lstm_dim: int = 128,
                embedding_dim: int = 300,
                return_state: bool = False):
