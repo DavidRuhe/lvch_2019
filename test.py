@@ -1,12 +1,8 @@
 """Training file."""
 import os
 from log import logger
-from utils import Tokenizer, generate, load_model, str2bool
-import tensorflow as tf
+from utils import Tokenizer, generate, load_model, str2bool, get_texts, DataGenerator
 import argparse
-import numpy as np
-
-from constants import SELECTED_BOOKS
 
 
 def main(feature_type: str, main_dir: str, seq_len: int, batch_size: int, lstm_dim: int,
@@ -22,25 +18,30 @@ def main(feature_type: str, main_dir: str, seq_len: int, batch_size: int, lstm_d
     character_level: whether tokenizer should be on character level.
     """
 
-    texts = {}
+    texts = get_texts(main_dir, feature_type, character_level)
 
-    for book in SELECTED_BOOKS:
-        path = os.path.join(main_dir, 'corpora', f'{feature_type}', f'{book}.txt')
-
-        with open(path, 'rb') as f:
-            texts[book] = f.read().decode()
-
-    full_text = ''.join(texts.values())
     tokenizer = Tokenizer(texts.values(), character_level=character_level)
 
-    model = load_model(seq_len,
-                       tokenizer.num_words,
+    model = load_model(seq_len=1,
+                       num_words=tokenizer.num_words,
                        with_embedding=True,
                        lstm_dim=lstm_dim,
                        batch_size=batch_size,
                        stateful=True)
 
     print(model.summary())
+
+    test_generator = DataGenerator(tokenizer,
+                                   tokenizer.full_text,
+                                   seq_len=seq_len,
+                                   batch_size=batch_size,
+                                   with_embedding=True,
+                                   train=False)
+
+    sample_batch = next(iter(test_generator))
+
+    logger.info(f"X batch shape: {sample_batch[0].shape}, y batch shape: {sample_batch[1].shape}")
+    logger.info(f"Sample batch text: {tokenizer.decode(sample_batch[0][0])}")
 
     file_path = os.path.join(main_dir, 'models',
                              f'{feature_type}_lstm_{lstm_dim}.hdf5')
@@ -49,16 +50,16 @@ def main(feature_type: str, main_dir: str, seq_len: int, batch_size: int, lstm_d
 
     model.load_weights(file_path)
 
-    generate(full_text, tokenizer, model, number_of_seeds=batch_size)
+    generate(tokenizer, test_generator, model)
 
 
 if __name__ == '__main__':
     parser = argparse.ArgumentParser()
-    parser.add_argument('--feature-type', default='word', type=str)
+    parser.add_argument('--feature-type', default='english', type=str)
     parser.add_argument('--main-dir', default='./', type=str)
-    parser.add_argument('--batch-size', default=1, type=int)
+    parser.add_argument('--batch-size', default=8, type=int)
     parser.add_argument('--lstm-dim', default=128, type=int)
-    parser.add_argument('--seq-len', default=1, type=int)
+    parser.add_argument('--seq-len', default=28, type=int)
     parser.add_argument('--character-level', default=False, type=str2bool)
 
     args = parser.parse_args()
