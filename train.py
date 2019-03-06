@@ -1,15 +1,12 @@
 """Training file."""
 import os
-import logging
 from utils import Tokenizer, DataGenerator, load_model, GenerateText
 import tensorflow as tf
 import argparse
 import string
 
 from constants import SELECTED_BOOKS
-
-logger = logging.getLogger()
-logger.setLevel(logging.INFO)
+from log import logger
 
 
 def main(feature_type: str, main_dir: str, seq_len: int, batch_size: int, lstm_dim: int,
@@ -38,19 +35,17 @@ def main(feature_type: str, main_dir: str, seq_len: int, batch_size: int, lstm_d
 
             texts[book] = text
 
-    full_text = ''.join(texts.values())
-
     tokenizer = Tokenizer(texts.values(), character_level=character_level)
 
     train_generator = DataGenerator(tokenizer,
-                                    full_text,
+                                    tokenizer.full_text,
                                     seq_len=seq_len,
                                     batch_size=batch_size,
                                     with_embedding=True,
                                     train=True)
 
     test_generator = DataGenerator(tokenizer,
-                                   full_text,
+                                   tokenizer.full_text,
                                    seq_len=seq_len,
                                    batch_size=batch_size,
                                    with_embedding=True,

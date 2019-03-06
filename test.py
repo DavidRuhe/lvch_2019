@@ -1,15 +1,12 @@
 """Training file."""
 import os
-import logging
+from log import logger
 from utils import Tokenizer, generate, load_model
 import tensorflow as tf
 import argparse
 import numpy as np
 
 from constants import SELECTED_BOOKS
-
-logger = logging.getLogger()
-logger.setLevel(logging.INFO)
 
 
 def main(feature_type: str, main_dir: str, seq_len: int, batch_size: int, lstm_dim: int,

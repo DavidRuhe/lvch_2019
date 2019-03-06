@@ -1,10 +1,10 @@
 """When ran, extracts features from bible using BHSA."""
 import os
 from tf.app import use
-import logging
+from log import logger
 
-logger = logging.getLogger()
-logger.setLevel(logging.INFO)
+logger = log.getLogger()
+logger.setLevel(log.INFO)
 
 MAIN_DIR = './'
 

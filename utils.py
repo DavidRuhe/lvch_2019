@@ -4,10 +4,8 @@ from sklearn import utils as skutils
 import numpy as np
 import math
 from collections.abc import Iterable
-import logging
 import os
-logger = logging.getLogger()
-logger.setLevel(logging.INFO)
+from log import logger
 
 
 class Tokenizer:
@@ -16,6 +14,8 @@ class Tokenizer:
         self.texts = texts
         self.full_text = "".join(texts)
         self.character_level = character_level
+
+        logger.info(f"Full text sample: {self.full_text[:32]}")
 
         if character_level:
             self.word_to_ix = {word: i for i, word in enumerate(set(self.full_text))}
