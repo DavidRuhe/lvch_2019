@@ -3,6 +3,7 @@ import os
 from utils import Tokenizer, DataGenerator, lstm_model, GenerateText, str2bool, get_texts
 import argparse
 from log import logger
+import tensorflow as tf
 
 
 def main(feature_type: str, main_dir: str, seq_len: int, batch_size: int, test_batch_size: int,
@@ -48,29 +49,29 @@ def main(feature_type: str, main_dir: str, seq_len: int, batch_size: int, test_b
                                 seq_len=seq_len,
                                 stateful=False)
 
-    training_model.fit_generator(
-        train_generator,
-        epochs=1,
-    )
+    # training_model.fit_generator(
+    #     train_generator,
+    #     epochs=1,
+    # )
 
     file_path = os.path.join(main_dir, 'models',
                              f'{feature_type}_lstm_{lstm_dim}.h5')
 
     training_model.save_weights(file_path)
 
-    # checkpoint = tf.keras.callbacks.ModelCheckpoint(file_path, monitor='val_loss',
-    #                                                 save_best_only=True)
-    # early_stopping = tf.keras.callbacks.EarlyStopping(monitor='val_loss', patience=5)
-    #
-    # generate_text = GenerateText(test_generator, tokenizer, file_path, batch_size=batch_size)
-    # callbacks_list = [checkpoint, early_stopping, generate_text]
-    #
-    # model.fit_generator(
-    #     train_generator,
-    #     validation_data=test_generator,
-    #     callbacks=callbacks_list,
-    #     epochs=256
-    # )
+    checkpoint = tf.keras.callbacks.ModelCheckpoint(file_path, monitor='val_loss',
+                                                    save_best_only=True)
+    early_stopping = tf.keras.callbacks.EarlyStopping(monitor='val_loss', patience=5)
+
+    generate_text = GenerateText(test_generator, tokenizer, file_path)
+    callbacks_list = [checkpoint, early_stopping, generate_text]
+
+    training_model.fit_generator(
+        train_generator,
+        validation_data=test_generator,
+        callbacks=callbacks_list,
+        epochs=256
+    )
 
 
 if __name__ == '__main__':

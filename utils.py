@@ -268,18 +268,18 @@ def generate_text(model, tokenizer, generator, predict_len=256):
 
 class GenerateText(tf.keras.callbacks.Callback):
     """Keras callback to generate text."""
-    def __init__(self, generator, tokenizer, weights_path, batch_size):
+    def __init__(self, generator, tokenizer, weights_path):
 
         super(GenerateText, self).__init__()
 
         self.generator = generator
         self.tokenizer = tokenizer
         self.weights_path = weights_path
-        self.batch_size = batch_size
+        self.batch_size = generator.batch_size
 
     def on_train_begin(self, *args, **kwargs):
         """Generates text at the beginning of an epoch."""
-        test_model = lstm_model(num_words=self.tokenizer.num_words, stateful=True,
+        test_model = lstm_model(seq_len=1, num_words=self.tokenizer.num_words, stateful=True,
                                 batch_size=self.batch_size)
 
         if os.path.exists(self.weights_path):
@@ -290,7 +290,7 @@ class GenerateText(tf.keras.callbacks.Callback):
     def on_epoch_end(self, *args, **kwargs):
         """Generates text at the end of epoch."""
 
-        test_model = lstm_model(num_words=self.tokenizer.num_words, stateful=True,
+        test_model = lstm_model(seq_len=1, num_words=self.tokenizer.num_words, stateful=True,
                                 batch_size=self.batch_size)
 
         test_model.load_weights(self.weights_path)
