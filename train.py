@@ -48,7 +48,12 @@ def main(feature_type: str, main_dir: str, seq_len: int, batch_size: int, test_b
                                 stateful=False)
 
     file_path = os.path.join(main_dir, 'models',
-                             f'{feature_type}_lstm_{lstm_dim}.h5')
+                             f'{feature_type}_lstm_{lstm_dim}')
+
+    if character_level:
+        file_path += '_character_level'
+
+    file_path += '.h5'
 
     training_model.save_weights(file_path)
 
@@ -75,7 +80,7 @@ if __name__ == '__main__':
     parser.add_argument('--test-batch-size', default=512, type=int)
     parser.add_argument('--lstm-dim', default=128, type=int)
     parser.add_argument('--seq-len', default=28, type=int)
-    parser.add_argument('--character-level', default=False, type=str2bool)
+    parser.add_argument('--character-level', default=True, type=str2bool)
 
     args = parser.parse_args()
 
