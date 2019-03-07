@@ -208,13 +208,13 @@ def lstm_model(num_words: int,
         tf.keras.layers.Dense(num_words, activation='softmax'))(lstm)
     model = tf.keras.Model(inputs=[source], outputs=[predicted_char])
     model.compile(
-        optimizer=tf.train.AdamOptimizer(learning_rate=0.01),
+        optimizer=tf.train.AdamOptimizer(),
         loss='sparse_categorical_crossentropy',
         metrics=['sparse_categorical_accuracy'])
     return model
 
 
-def generate_text(model, tokenizer, generator, predict_len=256):
+def generate_text(model, tokenizer, generator, predict_len=256, num_displayed=None):
     """Generating text with the language model.
 
     Parameters
@@ -223,11 +223,15 @@ def generate_text(model, tokenizer, generator, predict_len=256):
     tokenizer: tokenizer
     generator: test generator
     predict_len: length of text to predict
+    num_displayed: How many predictions to display. If not set: equal to batch size of generator.
 
     Returns
     -------
 
     """
+    if not num_displayed:
+        num_displayed = generator.batch_size
+
     rand_idx = np.random.randint(1, len(generator))
     seed = generator[rand_idx][0]
 
@@ -258,9 +262,9 @@ def generate_text(model, tokenizer, generator, predict_len=256):
         ]
         predictions.append(np.asarray(next_idx, dtype=np.int32))
 
-    for i in range(generator.batch_size):
-        print(f'\nGenerated text {i}:\n')
-        p = [predictions[j][i] for j in range(generator.batch_size)]
+    for i in range(num_displayed):
+        print(f'\nGenerated text {i + 1}:\n')
+        p = [predictions[j][i] for j in range(predict_len)]
         generated = tokenizer.decode(p)
         generated = generated.replace('eos', '\n')
         print(generated)
@@ -285,7 +289,7 @@ class GenerateText(tf.keras.callbacks.Callback):
         if os.path.exists(self.weights_path):
             test_model.load_weights(self.weights_path)
 
-        generate_text(test_model, self.tokenizer, self.generator)
+        generate_text(test_model, self.tokenizer, self.generator, num_displayed=2)
 
     def on_epoch_end(self, *args, **kwargs):
         """Generates text at the end of epoch."""
@@ -295,4 +299,4 @@ class GenerateText(tf.keras.callbacks.Callback):
 
         test_model.load_weights(self.weights_path)
 
-        generate_text(test_model, self.tokenizer, self.generator)
+        generate_text(test_model, self.tokenizer, self.generator, num_displayed=2)
