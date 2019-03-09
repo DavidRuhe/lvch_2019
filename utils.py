@@ -204,11 +204,10 @@ def lstm_model(num_words: int,
 
     embedding = tf.keras.layers.Embedding(input_dim=num_words, output_dim=embedding_dim)(source)
 
-    lstm, hf, cf, hb, cb = tf.keras.layers.Bidirectional(
-        tf.keras.layers.LSTM(embedding_dim,
-                             stateful=stateful,
-                             return_state=True,
-                             return_sequences=True))(embedding)
+    lstm, hf, cf = tf.keras.layers.LSTM(embedding_dim,
+                                        stateful=stateful,
+                                        return_state=True,
+                                        return_sequences=True)(embedding)
 
     predicted_char = tf.keras.layers.TimeDistributed(
         tf.keras.layers.Dense(num_words, activation='softmax'))(lstm)
