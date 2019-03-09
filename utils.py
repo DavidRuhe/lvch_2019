@@ -182,8 +182,9 @@ class DataGenerator(tf.keras.utils.Sequence):
 def lstm_model(num_words: int,
                seq_len: int = 64,
                batch_size=None,
-               stateful: bool = True,
-               embedding_dim: int = 300):
+               stateful: bool = False,
+               embedding_dim: int = 300,
+               return_state: bool = False):
     """Language model: predict the next word given the current word.
     Parameters
     ----------
@@ -202,11 +203,21 @@ def lstm_model(num_words: int,
         name='seed', shape=(seq_len,), batch_size=batch_size, dtype=tf.int32)
 
     embedding = tf.keras.layers.Embedding(input_dim=num_words, output_dim=embedding_dim)(source)
-    lstm = tf.keras.layers.LSTM(embedding_dim, stateful=stateful, return_sequences=True)(
-        embedding)
+
+    lstm, hf, cf, hb, cb = tf.keras.layers.Bidirectional(
+        tf.keras.layers.LSTM(embedding_dim,
+                             stateful=stateful,
+                             return_state=True,
+                             return_sequences=True))(embedding)
+
     predicted_char = tf.keras.layers.TimeDistributed(
         tf.keras.layers.Dense(num_words, activation='softmax'))(lstm)
-    model = tf.keras.Model(inputs=[source], outputs=[predicted_char])
+
+    if return_state:
+        model = tf.keras.Model(inputs=[source], outputs=[predicted_char, hf, cf, hb, cb])
+    else:
+        model = tf.keras.Model(inputs=[source], outputs=[predicted_char])
+
     model.compile(
         optimizer=tf.train.AdamOptimizer(learning_rate=.01),
         loss='sparse_categorical_crossentropy',

@@ -1,8 +1,9 @@
-"""Testing file."""
+"""Module for extracting the hidden states of the model for each book."""
+import argparse
+from utils import str2bool, Tokenizer, get_texts, lstm_model
+import numpy as np
 import os
 from log import logger
-from utils import Tokenizer, generate_text, lstm_model, str2bool, get_texts, DataGenerator
-import argparse
 
 
 def main(feature_type: str, main_dir: str, seq_len: int, batch_size: int, lstm_dim: int,
@@ -22,17 +23,20 @@ def main(feature_type: str, main_dir: str, seq_len: int, batch_size: int, lstm_d
 
     tokenizer = Tokenizer(texts.values(), character_level=character_level)
 
-    test_generator = DataGenerator(tokenizer,
-                                   tokenizer.full_text,
-                                   seq_len=seq_len,
-                                   batch_size=batch_size,
-                                   with_embedding=True,
-                                   train=False)
+    samples = {}
 
-    sample_batch = next(iter(test_generator))
+    for book in texts:
+        len_text = len(texts[book]) if character_level else len(texts[book].split())
+        rand_idx = np.random.randint(0, len_text - seq_len, batch_size)
 
-    logger.info(f"X batch shape: {sample_batch[0].shape}, y batch shape: {sample_batch[1].shape}")
-    logger.info(f"Sample batch text: {tokenizer.decode(sample_batch[0][0])}")
+        if character_level:
+            samples[book] = tokenizer.encode([texts[book][i: i + seq_len] for i in rand_idx])
+
+        else:
+            split_text = texts[book].split()
+            samples[book] = tokenizer.encode(
+                [" ".join(split_text[i: i + seq_len]) for i in rand_idx]
+            )
 
     file_path = os.path.join(main_dir, 'models',
                              f'{feature_type}_lstm_{lstm_dim}.h5')
@@ -41,12 +45,12 @@ def main(feature_type: str, main_dir: str, seq_len: int, batch_size: int, lstm_d
 
     prediction_model = lstm_model(num_words=tokenizer.num_words,
                                   seq_len=1,
-                                  batch_size=test_generator.batch_size,
+                                  batch_size=batch_size,
                                   stateful=True)
 
     prediction_model.load_weights(file_path)
 
-    generate_text(prediction_model, tokenizer, test_generator)
+    # generate_text(prediction_model, tokenizer, test_generator)
 
 
 if __name__ == '__main__':
