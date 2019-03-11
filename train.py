@@ -45,6 +45,7 @@ def main(feature_type: str, main_dir: str, seq_len: int, batch_size: int, test_b
 
     training_model = lstm_model(num_words=tokenizer.num_words,
                                 seq_len=seq_len,
+                                lstm_dim=lstm_dim,
                                 stateful=False)
 
     file_path = os.path.join(main_dir, 'models',
@@ -61,7 +62,7 @@ def main(feature_type: str, main_dir: str, seq_len: int, batch_size: int, test_b
                                                     save_best_only=True)
     early_stopping = tf.keras.callbacks.EarlyStopping(monitor='val_loss', patience=5)
 
-    generate_text = GenerateText(test_generator, tokenizer, file_path)
+    generate_text = GenerateText(test_generator, tokenizer, file_path, lstm_dim)
     callbacks_list = [checkpoint, early_stopping, generate_text]
 
     training_model.fit_generator(
@@ -78,9 +79,9 @@ if __name__ == '__main__':
     parser.add_argument('--main-dir', default='./', type=str)
     parser.add_argument('--batch-size', default=512, type=int)
     parser.add_argument('--test-batch-size', default=512, type=int)
-    parser.add_argument('--lstm-dim', default=128, type=int)
-    parser.add_argument('--seq-len', default=28, type=int)
-    parser.add_argument('--character-level', default=True, type=str2bool)
+    parser.add_argument('--lstm-dim', default=256, type=int)
+    parser.add_argument('--seq-len', default=32, type=int)
+    parser.add_argument('--character-level', default=False, type=str2bool)
 
     args = parser.parse_args()
 

@@ -184,6 +184,7 @@ def lstm_model(num_words: int,
                batch_size=None,
                stateful: bool = False,
                embedding_dim: int = 300,
+               lstm_dim: int = 512,
                return_state: bool = False):
     """Language model: predict the next word given the current word.
     Parameters
@@ -193,6 +194,8 @@ def lstm_model(num_words: int,
     batch_size: batch size
     stateful: whether to retain states after prediction
     embedding_dim: dimension of embedding layer.
+    lstm_dim: dimension of lstm layer
+    return_state: whether to return the hidden state.
 
     Returns
     -------
@@ -204,7 +207,7 @@ def lstm_model(num_words: int,
 
     embedding = tf.keras.layers.Embedding(input_dim=num_words, output_dim=embedding_dim)(source)
 
-    lstm, hf, cf = tf.keras.layers.LSTM(embedding_dim,
+    lstm, hf, cf = tf.keras.layers.LSTM(lstm_dim,
                                         stateful=stateful,
                                         return_state=True,
                                         return_sequences=True)(embedding)
@@ -213,7 +216,7 @@ def lstm_model(num_words: int,
         tf.keras.layers.Dense(num_words, activation='softmax'))(lstm)
 
     if return_state:
-        model = tf.keras.Model(inputs=[source], outputs=[predicted_char, hf, cf, hb, cb])
+        model = tf.keras.Model(inputs=[source], outputs=[predicted_char, hf, cf])
     else:
         model = tf.keras.Model(inputs=[source], outputs=[predicted_char])
 
@@ -224,40 +227,45 @@ def lstm_model(num_words: int,
     return model
 
 
-def generate_text(model, tokenizer, generator, predict_len=256, num_displayed=None):
+def generate_text(model, tokenizer, seed, predict_len=256, get_hidden=False):
     """Generating text with the language model.
 
     Parameters
     ----------
     model: language model
     tokenizer: tokenizer
-    generator: test generator
+    seed: numpy array with seed sequences to prime the model
     predict_len: length of text to predict
-    num_displayed: How many predictions to display. If not set: equal to batch size of generator.
+    get_hidden: whether to return hidden states.
 
     Returns
     -------
 
     """
-    if not num_displayed:
-        num_displayed = generator.batch_size
-
-    rand_idx = np.random.randint(1, len(generator))
-    seed = generator[rand_idx][0]
 
     assert seed.shape[0] > 0
 
+    hf = None
     correct = 0
     # First, run the seed forward to prime the state of the model.
     model.reset_states()
     for i in range(seed.shape[1] - 1):
-        next_probits = model.predict(seed[:, i:i + 1])
+        if not get_hidden:
+            next_probits = model.predict(seed[:, i:i + 1])
+        else:
+            next_probits, hf, cf = model.predict(seed[:, i:i + 1])
+
         next_probits = next_probits[:, 0, :]
         pred = np.argmax(next_probits, axis=-1)
         y = seed[:, i + 1]
         correct += (y == pred).sum()
 
-    print(f"Accuracy: {100 * correct / (seed.shape[1] * generator.batch_size):.2f}%.")
+    print(f"Accuracy: {100 * correct / (seed.shape[1] * len(seed)):.2f}%.")
+
+    # TODO: this feels hacky.
+    if get_hidden:
+        assert hf is not None
+        return hf
 
     predictions = [seed[:, -1:]]
     for i in range(predict_len):
@@ -268,11 +276,11 @@ def generate_text(model, tokenizer, generator, predict_len=256, num_displayed=No
 
         next_idx = [
             np.random.choice(tokenizer.num_words, p=next_probits[i])
-            for i in range(generator.batch_size)
+            for i in range(len(seed))
         ]
         predictions.append(np.asarray(next_idx, dtype=np.int32))
 
-    for i in range(num_displayed):
+    for i in range(len(seed)):
         print(f'\nGenerated text {i + 1}:\n')
         p = [predictions[j][i] for j in range(predict_len)]
         generated = tokenizer.decode(p)
@@ -282,7 +290,7 @@ def generate_text(model, tokenizer, generator, predict_len=256, num_displayed=No
 
 class GenerateText(tf.keras.callbacks.Callback):
     """Keras callback to generate text."""
-    def __init__(self, generator, tokenizer, weights_path):
+    def __init__(self, generator, tokenizer, weights_path, lstm_dim, num_displayed=2):
 
         super(GenerateText, self).__init__()
 
@@ -290,23 +298,31 @@ class GenerateText(tf.keras.callbacks.Callback):
         self.tokenizer = tokenizer
         self.weights_path = weights_path
         self.batch_size = generator.batch_size
+        self.lstm_dim = lstm_dim
+        self.num_displayed = num_displayed
 
     def on_train_begin(self, *args, **kwargs):
         """Generates text at the beginning of an epoch."""
         test_model = lstm_model(seq_len=1, num_words=self.tokenizer.num_words, stateful=True,
-                                batch_size=self.batch_size)
+                                batch_size=self.num_displayed, lstm_dim=self.lstm_dim)
 
         if os.path.exists(self.weights_path):
             test_model.load_weights(self.weights_path)
 
-        generate_text(test_model, self.tokenizer, self.generator, num_displayed=2)
+        rand_idx = np.random.randint(1, len(self.generator))
+        seed = self.generator[rand_idx][0][:self.num_displayed]
+
+        generate_text(test_model, self.tokenizer, seed)
 
     def on_epoch_end(self, *args, **kwargs):
         """Generates text at the end of epoch."""
 
         test_model = lstm_model(seq_len=1, num_words=self.tokenizer.num_words, stateful=True,
-                                batch_size=self.batch_size)
+                                batch_size=self.num_displayed, lstm_dim=self.lstm_dim)
 
         test_model.load_weights(self.weights_path)
 
-        generate_text(test_model, self.tokenizer, self.generator, num_displayed=2)
+        rand_idx = np.random.randint(1, len(self.generator))
+        seed = self.generator[rand_idx][0][:self.num_displayed]
+
+        generate_text(test_model, self.tokenizer, seed)
