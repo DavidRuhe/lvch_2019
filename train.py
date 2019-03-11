@@ -62,6 +62,7 @@ def main(feature_type: str, main_dir: str, seq_len: int, batch_size: int, test_b
                                                     save_best_only=True)
     early_stopping = tf.keras.callbacks.EarlyStopping(monitor='val_loss', patience=5)
 
+
     generate_text = GenerateText(test_generator, tokenizer, file_path, lstm_dim)
     callbacks_list = [checkpoint, early_stopping, generate_text]
 

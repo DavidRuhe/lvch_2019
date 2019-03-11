@@ -6,7 +6,7 @@ import argparse
 import numpy as np
 
 
-def main(feature_type: str, main_dir: str, seq_len: int, batch_size: int, lstm_dim: int,
+def test(feature_type: str, main_dir: str, seq_len: int, batch_size: int, lstm_dim: int,
          character_level: bool = False):
     """
     Parameters
