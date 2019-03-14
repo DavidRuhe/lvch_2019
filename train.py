@@ -62,7 +62,6 @@ def main(feature_type: str, main_dir: str, seq_len: int, batch_size: int, test_b
                                                     save_best_only=True)
     early_stopping = tf.keras.callbacks.EarlyStopping(monitor='val_loss', patience=5)
 
-
     generate_text = GenerateText(test_generator, tokenizer, file_path, lstm_dim)
     callbacks_list = [checkpoint, early_stopping, generate_text]
 
@@ -76,7 +75,7 @@ def main(feature_type: str, main_dir: str, seq_len: int, batch_size: int, test_b
 
 if __name__ == '__main__':
     parser = argparse.ArgumentParser()
-    parser.add_argument('--feature-type', default='english', type=str)
+    parser.add_argument('--feature-type', default='clause_type', type=str)
     parser.add_argument('--main-dir', default='./', type=str)
     parser.add_argument('--batch-size', default=512, type=int)
     parser.add_argument('--test-batch-size', default=512, type=int)

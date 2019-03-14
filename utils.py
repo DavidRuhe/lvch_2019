@@ -1,6 +1,7 @@
 """Utilities used across the project."""
 import tensorflow as tf
 from sklearn import utils as skutils
+import pandas as pd
 from constants import SELECTED_BOOKS
 import numpy as np
 import math
@@ -24,20 +25,27 @@ def get_texts(main_dir: str, feature_type: str, character_level: bool):
     type: dictionary
         dictionary with name: text.
     """
-    texts = {}
 
-    for book in SELECTED_BOOKS:
-        path = os.path.join(main_dir, 'corpora', f'{feature_type}', f'{book}.txt')
+    path = os.path.join(main_dir, 'corpora', 'main_corpus.csv')
+    df = pd.read_csv(path)
+    df = df.dropna(subset=[feature_type])
 
-        with open(path, 'rb') as f:
+    df['book'] = df['book'].str.replace('1_', '')
+    df['book'] = df['book'].str.replace('2_', '')
+    df.loc[df['book'] == 'ezra', 'book'] = 'ezra-nehemiah'
+    df.loc[df['book'] == 'nehemiah', 'book'] = 'ezra-nehemiah'
+    df = df[df['book'].isin(SELECTED_BOOKS)]
 
-            text = f.read().decode()
+    texts = dict(df.groupby('book')[feature_type].apply(list))
 
-            if not character_level:
-                text = text.lower()
-                text = text.translate(str.maketrans('', '', string.punctuation))
+    for book in texts:
+        text = ' '.join(texts[book])
 
-            texts[book] = text
+        if not character_level:
+            text = text.lower()
+            text = text.translate(str.maketrans('', '', string.punctuation))
+
+        texts[book] = text
 
     return texts
 
@@ -227,7 +235,7 @@ def lstm_model(num_words: int,
     return model
 
 
-def generate_text(model, tokenizer, seed, predict_len=256, get_hidden=False):
+def generate_text(model, tokenizer, seed, predict_len=256, get_hidden=False, random=False):
     """Generating text with the language model.
 
     Parameters
@@ -237,7 +245,7 @@ def generate_text(model, tokenizer, seed, predict_len=256, get_hidden=False):
     seed: numpy array with seed sequences to prime the model
     predict_len: length of text to predict
     get_hidden: whether to return hidden states.
-
+    random: whether to sample from the probits
     Returns
     -------
 
@@ -274,10 +282,13 @@ def generate_text(model, tokenizer, seed, predict_len=256, get_hidden=False):
 
         next_probits = next_probits[:, 0, :]
 
-        next_idx = [
-            np.random.choice(tokenizer.num_words, p=next_probits[i])
-            for i in range(len(seed))
-        ]
+        if random:
+            next_idx = [
+                np.random.choice(tokenizer.num_words, p=next_probits[i])
+                for i in range(len(seed))
+            ]
+        else:
+            next_idx = [np.argmax(next_probits[i]) for i in range(len(seed))]
         predictions.append(np.asarray(next_idx, dtype=np.int32))
 
     for i in range(len(seed)):

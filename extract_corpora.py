@@ -1,56 +1,91 @@
 """When ran, extracts features from bible using BHSA."""
 import os
 from tf.app import use
-from log import logger
+import pandas as pd
 
-logger = log.getLogger()
-logger.setLevel(log.INFO)
+from log import logger
 
 MAIN_DIR = './'
 
+def _append_to_main_dict(data, row_dict):
+
+    for k in row_dict:
+        data[k].append(row_dict[k])
+
+    return data
 
 def main():
     """Writes features to corpora folder."""
     use('bhsa', hoist=globals(), check=True)
 
+    data = {
+        'book_idx': [],
+        'book': [],
+        'chapter': [],
+        'verse': [],
+        'clause': [],
+        'word': [],
+        'lexeme': [],
+        'word_pos': [],
+        'verbal_stem': [],
+        'word_number': [],
+        'verbal_tense': [],
+        'clause_type': [],
+    }
+
     all_books = {T.bookName(b).lower(): i for i, b in enumerate(F.otype.s('book'))}
 
-    for i, book_name in enumerate(all_books):
+    for book_name in all_books:
         book_idx = all_books[book_name]
 
         logger.info(f"Extracting {book_name}...")
 
         b = F.otype.s('book')[book_idx]
-        book = []
-        for v in L.d(b, 'verse'):
 
-            verse = []
-            for s in L.d(v, 'sentence'):
+        for i, c in enumerate(L.d(b, 'chapter')):
 
-                sentence = []
-                for w in L.d(s, 'word'):
+            for j, v in enumerate(L.d(c, 'verse')):
 
-                    word = T.text(w).strip()
+                for k, cl in enumerate(L.d(v, 'clause')):
 
-                    if len(word) == 0:
-                        continue
+                    for w in L.d(cl, 'word'):
 
-                    sentence.append(word)
+                        row_dict = {
+                            'book_idx': book_idx,
+                            'book': book_name,
+                            'chapter': i,
+                            'verse': j,
+                            'clause': k,
+                            'word': T.text(w).strip(),
+                            'lexeme': F.lex.v(w),
+                            'word_pos': F.sp.v(w),
+                            'verbal_stem': F.vs.v(w),
+                            'word_number': F.nu.v(w),
+                            'verbal_tense': F.vt.v(w),
+                            'clause_type': F.typ.v(cl),
+                            }
 
-                if len(sentence) > 0:
+                        data = _append_to_main_dict(data, row_dict)
 
-                    sentence.insert(0, 'eos')
-                    verse.append(sentence)
+                    row_dict = {
+                        'book_idx': book_idx,
+                        'book': book_name,
+                        'chapter': i,
+                        'verse': j,
+                        'clause': k,
+                        'word': 'eov',
+                        'lexeme': 'eov',
+                        'word_pos': 'eov',
+                        'verbal_stem': 'eov',
+                        'word_number': 'eov',
+                        'verbal_tense': 'eov',
+                        'clause_type': 'eov'
+                    }
 
-            if len(verse) > 0:
-                verse.insert(0, ['eov'])
-                book.append(verse)
+                    data = _append_to_main_dict(data, row_dict)
 
-        book = ' '.join(word for verse in book for sentence in verse for word in sentence)
-
-        with open(os.path.join(MAIN_DIR, 'corpora', 'word', '%s.txt' % book_name), 'wb') as f:
-            f.write(book.encode())
-
+    data_df = pd.DataFrame(data)
+    data_df.to_csv(os.path.join(MAIN_DIR, 'data', 'main_corpus.csv'), index=False)
 
 if __name__ == '__main__':
     main()

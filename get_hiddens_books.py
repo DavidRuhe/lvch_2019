@@ -40,7 +40,12 @@ def main(feature_type: str, main_dir: str, seq_len: int, batch_size: int, lstm_d
             )
 
     file_path = os.path.join(main_dir, 'models',
-                             f'{feature_type}_lstm_{lstm_dim}.h5')
+                             f'{feature_type}_lstm_{lstm_dim}')
+
+    if character_level:
+        file_path += '_character_level'
+
+    file_path += '.h5'
 
     logger.info(f"Loading {file_path}")
 
@@ -74,10 +79,10 @@ def main(feature_type: str, main_dir: str, seq_len: int, batch_size: int, lstm_d
 
 if __name__ == '__main__':
     parser = argparse.ArgumentParser()
-    parser.add_argument('--feature-type', default='english', type=str)
+    parser.add_argument('--feature-type', default='word_pos', type=str)
     parser.add_argument('--main-dir', default='./', type=str)
     parser.add_argument('--batch-size', default=64, type=int)
-    parser.add_argument('--lstm-dim', default=300, type=int)
+    parser.add_argument('--lstm-dim', default=256, type=int)
     parser.add_argument('--seq-len', default=32, type=int)
     parser.add_argument('--character-level', default=False, type=str2bool)
 
