@@ -67,25 +67,8 @@ def main():
 
                         data = _append_to_main_dict(data, row_dict)
 
-                    row_dict = {
-                        'book_idx': book_idx,
-                        'book': book_name,
-                        'chapter': i,
-                        'verse': j,
-                        'clause': k,
-                        'word': 'eov',
-                        'lexeme': 'eov',
-                        'word_pos': 'eov',
-                        'verbal_stem': 'eov',
-                        'word_number': 'eov',
-                        'verbal_tense': 'eov',
-                        'clause_type': 'eov'
-                    }
-
-                    data = _append_to_main_dict(data, row_dict)
-
     data_df = pd.DataFrame(data)
-    data_df.to_csv(os.path.join(MAIN_DIR, 'data', 'main_corpus.csv'), index=False)
+    data_df.to_csv(os.path.join(MAIN_DIR, 'corpora', 'main_corpus.csv'), index=False)
 
 if __name__ == '__main__':
     main()

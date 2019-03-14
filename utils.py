@@ -36,7 +36,9 @@ def get_texts(main_dir: str, feature_type: str, character_level: bool):
     df.loc[df['book'] == 'nehemiah', 'book'] = 'ezra-nehemiah'
     df = df[df['book'].isin(SELECTED_BOOKS)]
 
-    texts = dict(df.groupby('book')[feature_type].apply(list))
+    df = df[df[feature_type] != df[feature_type].shift()]
+
+    texts = df.groupby('book')[feature_type].apply(list)
 
     for book in texts:
         text = ' '.join(texts[book])
