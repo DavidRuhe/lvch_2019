@@ -57,7 +57,7 @@ def main():
                             'verse': j,
                             'clause': k,
                             'word': T.text(w).strip(),
-                            'lexeme': F.lex.v(w),
+                            'lexeme': F.lex_utf8.v(w),
                             'word_pos': F.sp.v(w),
                             'verbal_stem': F.vs.v(w),
                             'word_number': F.nu.v(w),

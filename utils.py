@@ -27,7 +27,12 @@ def get_texts(main_dir: str, feature_type: str, character_level: bool):
     """
 
     path = os.path.join(main_dir, 'corpora', 'main_corpus.csv')
-    df = pd.read_csv(path)
+
+    try:
+        df = pd.read_csv(path)
+    except FileNotFoundError:
+        raise FileNotFoundError("Run extract_corpora.py first!")
+
     df = df.dropna(subset=[feature_type])
 
     df['book'] = df['book'].str.replace('1_', '')
