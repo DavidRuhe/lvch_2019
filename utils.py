@@ -91,23 +91,55 @@ class Tokenizer:
 
         logger.info(f"Length of tokenizer: {self.num_words}")
 
-    def encode(self, texts: Iterable):
+    def encode(self, texts: Iterable, errors='raise'):
         """Encode an array of texts.
 
         Parameters
         ----------
         texts: Iterable
             List of texts to encode
+        errors: str
+            What to do when encounting errors.
 
         Returns
         -------
             Tuple of encoded texts
         """
-        if self.character_level:
-            return tuple([self.word_to_ix[word] for word in text] for text in texts)
+
+        assert (isinstance(text, str) for text in texts)
+
+        if errors == 'raise':
+            if self.character_level:
+                return list([self.word_to_ix[word] for word in text] for text in texts)
+
+            else:
+                return list([self.word_to_ix[word] for word in text.split(' ')] for text in texts)
+
+        elif errors == 'ignore':
+            encoded = []
+            for text in texts:
+
+                text_encoded = []
+                if self.character_level:
+                    for word in text:
+                        try:
+                            text_encoded.append(self.word_to_ix[word])
+                        except KeyError:
+                            continue
+
+                else:
+                    for word in text.split(' '):
+                        try:
+                            text_encoded.append(self.word_to_ix[word])
+                        except KeyError:
+                            continue
+
+                encoded.append(text_encoded)
+
+            return encoded
 
         else:
-            return tuple([self.word_to_ix[word] for word in text.split()] for text in texts)
+            raise ValueError("Provide valid error handling.")
 
     def decode(self, encoded: Iterable):
         """Decode an array of integers.
@@ -200,7 +232,8 @@ def lstm_model(num_words: int,
                stateful: bool = False,
                embedding_dim: int = 300,
                lstm_dim: int = 512,
-               return_state: bool = False):
+               return_state: bool = False,
+               flatten: bool = False):
     """Language model: predict the next word given the current word.
     Parameters
     ----------
@@ -230,6 +263,8 @@ def lstm_model(num_words: int,
     predicted_char = tf.keras.layers.TimeDistributed(
         tf.keras.layers.Dense(num_words, activation='softmax'))(lstm)
 
+    if flatten:
+        predicted_char = tf.keras.layers.Flatten()(predicted_char)
     if return_state:
         model = tf.keras.Model(inputs=[source], outputs=[predicted_char, hf, cf])
     else:
@@ -277,7 +312,6 @@ def generate_text(model, tokenizer, seed, predict_len=256, get_hidden=False, ran
 
     print(f"Accuracy: {100 * correct / (seed.shape[1] * len(seed)):.2f}%.")
 
-    # TODO: this feels hacky.
     if get_hidden:
         assert hf is not None
         return hf
@@ -304,6 +338,7 @@ def generate_text(model, tokenizer, seed, predict_len=256, get_hidden=False, ran
         generated = tokenizer.decode(p)
         generated = generated.replace('eos', '\n')
         print(generated)
+
 
 
 class GenerateText(tf.keras.callbacks.Callback):
@@ -344,3 +379,4 @@ class GenerateText(tf.keras.callbacks.Callback):
         seed = self.generator[rand_idx][0][:self.num_displayed]
 
         generate_text(test_model, self.tokenizer, seed)
+
