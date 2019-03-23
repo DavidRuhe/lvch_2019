@@ -70,7 +70,7 @@ def plot_dendogram_and_tsne(hidden_dict, title, pca_components=128):
 
 def explain_predictions(seeds, model, tokenizer,
                         num_lime_samples=1024,
-                        num_explanations_per_book=8):
+                        num_explanations_per_book=2):
     """Explains keras language model given a dictionary of encoded seeds.
     Parameters
     ----------
@@ -125,5 +125,5 @@ def explain_predictions(seeds, model, tokenizer,
 
             explanation.show_in_notebook()
 
-            if i == num_explanations_per_book:
+            if i == num_explanations_per_book - 1:
                 break

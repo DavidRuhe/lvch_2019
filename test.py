@@ -5,15 +5,15 @@ from utils import Tokenizer, generate_text, lstm_model, str2bool, get_texts, Dat
 import argparse
 import numpy as np
 import pickle
-import shap
 
 
-def main(feature_type: str, main_dir: str, seq_len: int, batch_size: int, lstm_dim: int,
-         character_level: bool = False):
+def main(feature_type: str, language: str, main_dir: str, seq_len: int, batch_size: int,
+         lstm_dim: int, character_level: bool = False):
     """
     Parameters
     ----------
     feature_type: the name of the feature
+    language: language of the text.
     main_dir: base directory
     seq_len: sequence length
     batch_size: batch size
@@ -21,7 +21,7 @@ def main(feature_type: str, main_dir: str, seq_len: int, batch_size: int, lstm_d
     character_level: whether tokenizer should be on character level.
     """
 
-    texts = get_texts(main_dir, feature_type, character_level)
+    texts = get_texts(main_dir, language, feature_type, character_level)
 
     tokenizer = Tokenizer(texts.values(), character_level=character_level)
 
@@ -53,7 +53,7 @@ def main(feature_type: str, main_dir: str, seq_len: int, batch_size: int, lstm_d
     logger.info(f"Sample batch text: {tokenizer.decode(sample_batch[0][0])}")
 
     file_path = os.path.join(main_dir, 'models',
-                             f'{feature_type}_lstm_{lstm_dim}')
+                             f'{feature_type}_{language}_lstm_{lstm_dim}')
 
     if character_level:
         file_path += '_character_level'
@@ -80,7 +80,7 @@ def main(feature_type: str, main_dir: str, seq_len: int, batch_size: int, lstm_d
         hiddens[book] = hf
         seeds[book] = seed
 
-    file_name = f'{feature_type}_lstm_{lstm_dim}_seq_len_{seq_len}'
+    file_name = f'{feature_type}_{language}_lstm_{lstm_dim}_seq_len_{seq_len}'
     if character_level:
         file_name += '_character-level'
     file_name += '.pkl'
@@ -91,7 +91,6 @@ def main(feature_type: str, main_dir: str, seq_len: int, batch_size: int, lstm_d
 
     logger.info(f"Succesfully saved hidden dimensions to {path_out}")
 
-    print(seeds)
     path_out = os.path.join('data', 'seeds', file_name)
     with open(path_out, 'wb') as f:
         pickle.dump(seeds, f)
@@ -101,7 +100,8 @@ def main(feature_type: str, main_dir: str, seq_len: int, batch_size: int, lstm_d
 
 if __name__ == '__main__':
     parser = argparse.ArgumentParser()
-    parser.add_argument('--feature-type', default='lexeme', type=str)
+    parser.add_argument('--feature-type', default='word', type=str)
+    parser.add_argument('--language', default='english', type=str)
     parser.add_argument('--main-dir', default='./', type=str)
     parser.add_argument('--batch-size', default=64, type=int)
     parser.add_argument('--lstm-dim', default=512, type=int)
@@ -110,5 +110,5 @@ if __name__ == '__main__':
 
     args = parser.parse_args()
 
-    main(args.feature_type, args.main_dir, args.seq_len, args.batch_size, args.lstm_dim,
-         args.character_level)
+    main(args.feature_type, args.language, args.main_dir, args.seq_len, args.batch_size,
+         args.lstm_dim, args.character_level)
