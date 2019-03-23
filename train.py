@@ -50,7 +50,7 @@ def main(feature_type: str, language: str, main_dir: str, seq_len: int, batch_si
                                 stateful=False)
 
     file_path = os.path.join(main_dir, 'models',
-                             f'{feature_type}_lstm_{lstm_dim}')
+                             f'{feature_type}_{language}_lstm_{lstm_dim}')
 
     if character_level:
         file_path += '_character_level'
