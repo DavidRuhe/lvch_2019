@@ -1,2 +1,6 @@
 data
 .ipynb_checkpoints
+.DS_Store
+.idea/
+__pycache__/
+*.h5
