@@ -12,11 +12,12 @@ import argparse
 import string
 
 
-def get_texts(main_dir: str, feature_type: str, character_level: bool):
+def get_texts(main_dir: str, language: str, feature_type: str, character_level: bool):
     """Load texts from corpus folder.
     Parameters
     ----------
-    main_dir: base directory of project
+    main_dir: main_dir path
+    language: language of corpus
     feature_type: which corpus to read.
     character_level: whether the model is on character level.
 
@@ -26,12 +27,19 @@ def get_texts(main_dir: str, feature_type: str, character_level: bool):
         dictionary with name: text.
     """
 
-    path = os.path.join(main_dir, 'corpora', 'main_corpus.csv')
+    if language == 'hebrew':
+        path = os.path.join(main_dir, 'corpora', 'main_corpus.csv')
+
+    elif language == 'english':
+        path = os.path.join(main_dir, 'corpora', 'english_corpus.csv')
+
+    else:
+        raise ValueError(f"{language} is an invalid language choice.")
 
     try:
         df = pd.read_csv(path)
     except FileNotFoundError:
-        raise FileNotFoundError("Run extract_corpora.py first!")
+        raise FileNotFoundError("Run extract_corpora.py or extract_english.py first!")
 
     df = df.dropna(subset=[feature_type])
 

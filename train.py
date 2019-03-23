@@ -6,13 +6,14 @@ from log import logger
 import tensorflow as tf
 
 
-def main(feature_type: str, main_dir: str, seq_len: int, batch_size: int, test_batch_size: int,
-         lstm_dim: int, character_level: bool = False):
+def main(feature_type: str, language: str, main_dir: str, seq_len: int, batch_size: int,
+         test_batch_size: int, lstm_dim: int, character_level: bool = False):
     """
     Parameters
     ----------
     feature_type: the name of the feature
     main_dir: base directory
+    language: language of corpus
     seq_len: sequence length
     batch_size: batch size
     test_batch_size: test batch size
@@ -20,7 +21,7 @@ def main(feature_type: str, main_dir: str, seq_len: int, batch_size: int, test_b
     character_level: whether tokenizer should be on character level.
     """
 
-    texts = get_texts(main_dir, feature_type, character_level)
+    texts = get_texts(main_dir, language, feature_type, character_level)
 
     tokenizer = Tokenizer(texts.values(), character_level=character_level)
 
@@ -75,7 +76,8 @@ def main(feature_type: str, main_dir: str, seq_len: int, batch_size: int, test_b
 
 if __name__ == '__main__':
     parser = argparse.ArgumentParser()
-    parser.add_argument('--feature-type', default='clause_type', type=str)
+    parser.add_argument('--feature-type', default='word', type=str)
+    parser.add_argument('--language', default='english', type=str)
     parser.add_argument('--main-dir', default='./', type=str)
     parser.add_argument('--batch-size', default=512, type=int)
     parser.add_argument('--test-batch-size', default=512, type=int)
@@ -85,5 +87,5 @@ if __name__ == '__main__':
 
     args = parser.parse_args()
 
-    main(args.feature_type, args.main_dir, args.seq_len, args.batch_size,
+    main(args.feature_type, args.language, args.main_dir, args.seq_len, args.batch_size,
          args.test_batch_size, args.lstm_dim, args.character_level)

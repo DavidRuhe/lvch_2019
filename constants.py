@@ -11,3 +11,21 @@ SELECTED_BOOKS = ['genesis',
                   'ezra-nehemiah',
                   'ecclesiastes',
                   'judges']
+
+KJ_MAPPER = {'Gen': 'genesis',
+             'Exo': 'exodus',
+             'Lev': 'leviticus',
+             'Deu': 'deuteronomy',
+             'Sa1': 'samuel',
+             'Sa2': 'samuel',
+             'Kg1': 'kings',
+             'Kg2': 'kings',
+             'Dan': 'daniel',
+             'Ch1': 'chronicles',
+             'Ch2': 'chronicles',
+             'Sol': 'song_of_songs',
+             'Ezr': 'ezra-nehemiah',
+             'Neh': 'ezra-nehemiah',
+             'Ecc': 'ecclesiastes',
+             'Jdg': 'judges'
+             }
