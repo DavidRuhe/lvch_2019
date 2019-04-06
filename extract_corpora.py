@@ -31,6 +31,7 @@ def main():
         'word_number': [],
         'verbal_tense': [],
         'clause_type': [],
+        'phrase_function': [],
     }
 
     all_books = {T.bookName(b).lower(): i for i, b in enumerate(F.otype.s('book'))}
@@ -48,24 +49,27 @@ def main():
 
                 for k, cl in enumerate(L.d(v, 'clause')):
 
-                    for w in L.d(cl, 'word'):
+                    for l, p in enumerate(L.d(cl, 'phrase')):
 
-                        row_dict = {
-                            'book_idx': book_idx,
-                            'book': book_name,
-                            'chapter': i,
-                            'verse': j,
-                            'clause': k,
-                            'word': T.text(w).strip(),
-                            'lexeme': F.lex_utf8.v(w),
-                            'word_pos': F.sp.v(w),
-                            'verbal_stem': F.vs.v(w),
-                            'word_number': F.nu.v(w),
-                            'verbal_tense': F.vt.v(w),
-                            'clause_type': F.typ.v(cl),
-                            }
+                        for w in L.d(p, 'word'):
 
-                        data = _append_to_main_dict(data, row_dict)
+                            row_dict = {
+                                'book_idx': book_idx,
+                                'book': book_name,
+                                'chapter': i,
+                                'verse': j,
+                                'clause': k,
+                                'word': T.text(w).strip(),
+                                'lexeme': F.lex_utf8.v(w),
+                                'word_pos': F.sp.v(w),
+                                'verbal_stem': F.vs.v(w),
+                                'word_number': F.nu.v(w),
+                                'verbal_tense': F.vt.v(w),
+                                'clause_type': F.typ.v(cl),
+                                'phrase_function': F.function.v(p)
+                                }
+
+                            data = _append_to_main_dict(data, row_dict)
 
     data_df = pd.DataFrame(data)
     data_df.to_csv(os.path.join(MAIN_DIR, 'corpora', 'main_corpus.csv'), index=False)

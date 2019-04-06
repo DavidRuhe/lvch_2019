@@ -10,7 +10,9 @@ SELECTED_BOOKS = ['genesis',
                   'song_of_songs',
                   'ezra-nehemiah',
                   'ecclesiastes',
-                  'judges']
+                  'judges',
+                  'joshua',
+                  'esther']
 
 KJ_MAPPER = {'Gen': 'genesis',
              'Exo': 'exodus',
@@ -27,5 +29,7 @@ KJ_MAPPER = {'Gen': 'genesis',
              'Ezr': 'ezra-nehemiah',
              'Neh': 'ezra-nehemiah',
              'Ecc': 'ecclesiastes',
-             'Jdg': 'judges'
+             'Jdg': 'judges',
+             'Est': 'esther',
+             'Jos': 'joshua'
              }
