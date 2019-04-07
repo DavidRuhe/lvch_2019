@@ -7,6 +7,7 @@ import matplotlib.pyplot as plt
 from sklearn.manifold import TSNE
 from tqdm.auto import tqdm
 from lime.lime_text import LimeTextExplainer
+import seaborn as sns
 
 
 def plot_dendogram_and_tsne(hidden_dict, title, pca_components=128):
@@ -55,16 +56,55 @@ def plot_dendogram_and_tsne(hidden_dict, title, pca_components=128):
     tsne = TSNE(n_components=2, verbose=1)
     tsne_results = tsne.fit_transform(np.concatenate(prob_matrices))
 
-    plt.figure(figsize=(10, 10))
+    plt.figure(figsize=(25, 25))
     i = 0
-    for book in hidden_dict:
-        plt.scatter(tsne_results[i:i + cases_per_book, 0],
-                    tsne_results[i:i + cases_per_book, 1], label=book)
+    cmap = sns.color_palette('rainbow', n_colors=len(hidden_dict))
+
+    for j, book in enumerate(hidden_dict):
+
+
+        sns.scatterplot(tsne_results[i:i + cases_per_book, 0],
+                    tsne_results[i:i + cases_per_book, 1], label=book, color=cmap[j])
         i += cases_per_book
 
-    plt.title("T-SNE plot of " + title)
 
     plt.legend()
+    plt.show()
+
+    plt.figure(figsize=(25, 25))
+
+    i = 0
+
+    alpha = 0.3
+    for j, book in enumerate(hidden_dict):
+
+        sns.kdeplot(tsne_results[i:i + cases_per_book, 0],
+                    tsne_results[i:i + cases_per_book, 1], label=book, color=cmap[j],
+                    n_levels=1, alpha=alpha, shade=True, shade_lowest=False)
+
+        i += cases_per_book
+
+
+    leg = plt.legend()
+    for lh in leg.legendHandles:
+        lh.set_alpha(alpha)
+
+    plt.show()
+
+
+    plt.figure(figsize=(25, 25))
+    i = 0
+    for j, book in enumerate(hidden_dict):
+
+        sns.kdeplot(tsne_results[i:i + cases_per_book, 0],
+                    tsne_results[i:i + cases_per_book, 1], label=book, color=cmap[j],
+                    n_levels=1)
+
+        i += cases_per_book
+
+
+    plt.legend()
+
     plt.show()
 
 
