@@ -62,11 +62,39 @@ def plot_dendogram_and_tsne(hidden_dict, title, pca_components=128):
 
     for j, book in enumerate(hidden_dict):
 
-
         sns.scatterplot(tsne_results[i:i + cases_per_book, 0],
                     tsne_results[i:i + cases_per_book, 1], label=book, color=cmap[j])
         i += cases_per_book
 
+    plt.legend()
+    plt.show()
+
+    sbh = ['genesis', 'exodus', 'leviticus', 'deuteronomy', 'joshua',
+           'judges', 'kings', 'samuel']
+    lbh = ['song_of_songs', 'ecclesiastes', 'esther', 'daniel', 'ezra-nehemiah', 'chronicles']
+
+    plt.figure(figsize=(25, 25))
+    i = 0
+
+    sbh_tsne = []
+    lbh_tsne = []
+
+    for j, book in enumerate(hidden_dict):
+        if book in sbh:
+            sbh_tsne.append(([tsne_results[i:i + cases_per_book]]))
+        elif book in lbh:
+            lbh_tsne.append(([tsne_results[i:i + cases_per_book]]))
+
+        else:
+            raise KeyError(f"{book} not in sbh or lbh.")
+
+        i += cases_per_book
+
+    sbh_tsne = np.hstack(sbh_tsne).squeeze(0)
+    lbh_tsne = np.hstack(lbh_tsne).squeeze(0)
+
+    plt.scatter(sbh_tsne[:, 0], sbh_tsne[:, 1], label='sbh', color='blue')
+    plt.scatter(lbh_tsne[:, 0], lbh_tsne[:, 1], label='lbh', color='red')
 
     plt.legend()
     plt.show()
