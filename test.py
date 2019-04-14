@@ -7,8 +7,8 @@ import numpy as np
 import pickle
 
 
-def main(feature_type: str, language: str, main_dir: str, seq_len: int, batch_size: int,
-         lstm_dim: int, character_level: bool = False):
+def main(feature_type: str, language: str, domain: str, main_dir: str, seq_len: int,
+         batch_size: int, lstm_dim: int, character_level: bool = False):
     """
     Parameters
     ----------
@@ -21,7 +21,7 @@ def main(feature_type: str, language: str, main_dir: str, seq_len: int, batch_si
     character_level: whether tokenizer should be on character level.
     """
 
-    texts = get_texts(main_dir, language, feature_type, character_level)
+    texts = get_texts(main_dir, language, feature_type, character_level, domain)
 
     tokenizer = Tokenizer(texts.values(), character_level=character_level)
 
@@ -55,6 +55,9 @@ def main(feature_type: str, language: str, main_dir: str, seq_len: int, batch_si
     file_path = os.path.join(main_dir, 'models',
                              f'{feature_type}_{language}_lstm_{lstm_dim}')
 
+    if domain:
+        file_path += '_' + domain
+
     if character_level:
         file_path += '_character_level'
 
@@ -73,14 +76,21 @@ def main(feature_type: str, language: str, main_dir: str, seq_len: int, batch_si
 
     hiddens = {}
     seeds = {}
+    predictions = {}
 
     for book in samples:
         seed = np.stack(samples[book])
-        hf = generate_text(prediction_model, tokenizer, seed, get_hidden=True)
+        hf, preds = generate_text(prediction_model, tokenizer, seed, get_hidden=True)
         hiddens[book] = hf
         seeds[book] = seed
+        preds = [tokenizer.ix_to_word[pred] for pred in preds]
+        predictions[book] = preds
 
     file_name = f'{feature_type}_{language}_lstm_{lstm_dim}_seq_len_{seq_len}'
+
+    if domain:
+        file_name += '_' + domain
+
     if character_level:
         file_name += '_character-level'
     file_name += '.pkl'
@@ -94,21 +104,28 @@ def main(feature_type: str, language: str, main_dir: str, seq_len: int, batch_si
     path_out = os.path.join('data', 'seeds', file_name)
     with open(path_out, 'wb') as f:
         pickle.dump(seeds, f)
-
     logger.info(f"Succesfully saved seeds to {path_out}")
+
+    path_out = os.path.join('data', 'predictions', file_name)
+    with open(path_out, 'wb') as f:
+        pickle.dump(predictions, f)
+
+    logger.info(f"Succesfully saved predictions to {path_out}")
+
 
 
 if __name__ == '__main__':
     parser = argparse.ArgumentParser()
-    parser.add_argument('--feature-type', default='word', type=str)
-    parser.add_argument('--language', default='english', type=str)
+    parser.add_argument('--feature-type', default='verbal_stem', type=str)
+    parser.add_argument('--domain', default=None, type=str)
+    parser.add_argument('--language', default='hebrew', type=str)
     parser.add_argument('--main-dir', default='./', type=str)
     parser.add_argument('--batch-size', default=64, type=int)
-    parser.add_argument('--lstm-dim', default=512, type=int)
+    parser.add_argument('--lstm-dim', default=256, type=int)
     parser.add_argument('--seq-len', default=32, type=int)
     parser.add_argument('--character-level', default=False, type=str2bool)
 
     args = parser.parse_args()
 
-    main(args.feature_type, args.language, args.main_dir, args.seq_len, args.batch_size,
-         args.lstm_dim, args.character_level)
+    main(args.feature_type, args.language, args.domain, args.main_dir, args.seq_len,
+         args.batch_size, args.lstm_dim, args.character_level)

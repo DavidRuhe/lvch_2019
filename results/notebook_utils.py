@@ -10,7 +10,7 @@ from lime.lime_text import LimeTextExplainer
 import seaborn as sns
 
 
-def plot_dendogram_and_tsne(hidden_dict, title, pca_components=128):
+def plot_dendogram_and_tsne(hidden_dict, title, predictions=None, pca_components=128):
     """Plot dendogram and t-sne plots of hidden dimensions.
 
     Parameters
@@ -56,7 +56,7 @@ def plot_dendogram_and_tsne(hidden_dict, title, pca_components=128):
     tsne = TSNE(n_components=2, verbose=1)
     tsne_results = tsne.fit_transform(np.concatenate(prob_matrices))
 
-    plt.figure(figsize=(25, 25))
+    plt.figure(figsize=(10, 10))
     i = 0
     cmap = sns.color_palette('rainbow', n_colors=len(hidden_dict))
 
@@ -73,7 +73,7 @@ def plot_dendogram_and_tsne(hidden_dict, title, pca_components=128):
            'judges', 'kings', 'samuel']
     lbh = ['song_of_songs', 'ecclesiastes', 'esther', 'daniel', 'ezra-nehemiah', 'chronicles']
 
-    plt.figure(figsize=(25, 25))
+    plt.figure(figsize=(10, 10))
     i = 0
 
     sbh_tsne = []
@@ -99,7 +99,51 @@ def plot_dendogram_and_tsne(hidden_dict, title, pca_components=128):
     plt.legend()
     plt.show()
 
-    plt.figure(figsize=(25, 25))
+    if predictions:
+        all_predictions = np.concatenate([predictions[b] for b in predictions])
+        unique_predicitons = np.unique(all_predictions)
+
+        plt.figure(figsize=(10, 10))
+
+        for prediction in unique_predicitons:
+            pred_tsnes = tsne_results[all_predictions == prediction]
+            plt.scatter(pred_tsnes[:, 0], pred_tsnes[:, 1], label=prediction)
+
+    plt.legend()
+    plt.show()
+
+    prose = ['genesis', 'exodus', 'leviticus', 'deuteronomy', 'joshua', 'judges', 'samuel', 'kings',
+             'daniel', 'ezra-nehemiah', 'chronicles']
+
+    poetry = ['song_of_songs', 'ecclesiastes']
+
+    plt.figure(figsize=(10, 10))
+    i = 0
+
+    prose_tsne = []
+    poetry_tsne = []
+
+    for j, book in enumerate(hidden_dict):
+        if book in prose:
+            prose_tsne.append(([tsne_results[i:i + cases_per_book]]))
+        elif book in poetry:
+            poetry_tsne.append(([tsne_results[i:i + cases_per_book]]))
+
+        else:
+            raise KeyError(f"{book} not in prose or poetry.")
+
+        i += cases_per_book
+
+    prose_tsne = np.hstack(prose_tsne).squeeze(0)
+    poetry_tsne = np.hstack(poetry_tsne).squeeze(0)
+
+    plt.scatter(prose_tsne[:, 0], prose_tsne[:, 1], label='prose', color='blue')
+    plt.scatter(poetry_tsne[:, 0], poetry_tsne[:, 1], label='poetry', color='red')
+
+    plt.legend()
+    plt.show()
+
+    plt.figure(figsize=(10, 10))
 
     i = 0
 
@@ -120,7 +164,7 @@ def plot_dendogram_and_tsne(hidden_dict, title, pca_components=128):
     plt.show()
 
 
-    plt.figure(figsize=(25, 25))
+    plt.figure(figsize=(10, 10))
     i = 0
     for j, book in enumerate(hidden_dict):
 

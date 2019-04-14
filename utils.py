@@ -12,7 +12,8 @@ import argparse
 import string
 
 
-def get_texts(main_dir: str, language: str, feature_type: str, character_level: bool):
+def get_texts(main_dir: str, language: str, feature_type: str, character_level: bool,
+              domain: str):
     """Load texts from corpus folder.
     Parameters
     ----------
@@ -20,6 +21,8 @@ def get_texts(main_dir: str, language: str, feature_type: str, character_level: 
     language: language of corpus
     feature_type: which corpus to read.
     character_level: whether the model is on character level.
+    domain: str
+        which domain to use: [N, D, Q[
 
     Returns
     -------
@@ -50,6 +53,15 @@ def get_texts(main_dir: str, language: str, feature_type: str, character_level: 
     df = df[df['book'].isin(SELECTED_BOOKS)]
 
     df = df[df[feature_type] != df[feature_type].shift()]
+
+    if language == 'hebrew':
+        df = df[df['language'] == 'Hebrew']
+
+        if domain:
+            assert domain in ['N', 'D', 'Q']
+            df = df[df['domain'] == domain]
+
+            print(df.shape)
 
     texts = dict(df.groupby('book')[feature_type].apply(list))
 
@@ -322,7 +334,7 @@ def generate_text(model, tokenizer, seed, predict_len=256, get_hidden=False, ran
 
     if get_hidden:
         assert hf is not None
-        return hf
+        return hf, pred
 
     predictions = [seed[:, -1:]]
     for i in range(predict_len):

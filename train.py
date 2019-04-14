@@ -6,8 +6,8 @@ from log import logger
 import tensorflow as tf
 
 
-def main(feature_type: str, language: str, main_dir: str, seq_len: int, batch_size: int,
-         test_batch_size: int, lstm_dim: int, character_level: bool = False):
+def main(feature_type: str, language: str, domain: str, main_dir: str, seq_len: int,
+         batch_size: int, test_batch_size: int, lstm_dim: int, character_level: bool = False):
     """
     Parameters
     ----------
@@ -21,7 +21,7 @@ def main(feature_type: str, language: str, main_dir: str, seq_len: int, batch_si
     character_level: whether tokenizer should be on character level.
     """
 
-    texts = get_texts(main_dir, language, feature_type, character_level)
+    texts = get_texts(main_dir, language, feature_type, character_level, domain)
 
     tokenizer = Tokenizer(texts.values(), character_level=character_level)
 
@@ -52,6 +52,9 @@ def main(feature_type: str, language: str, main_dir: str, seq_len: int, batch_si
     file_path = os.path.join(main_dir, 'models',
                              f'{feature_type}_{language}_lstm_{lstm_dim}')
 
+    if domain:
+        file_path += '_' + domain
+
     if character_level:
         file_path += '_character_level'
 
@@ -76,16 +79,17 @@ def main(feature_type: str, language: str, main_dir: str, seq_len: int, batch_si
 
 if __name__ == '__main__':
     parser = argparse.ArgumentParser()
-    parser.add_argument('--feature-type', default='word', type=str)
-    parser.add_argument('--language', default='english', type=str)
+    parser.add_argument('--feature-type', default='verbal_stem', type=str)
+    parser.add_argument('--domain', default=None, type=str)
+    parser.add_argument('--language', default='hebrew', type=str)
     parser.add_argument('--main-dir', default='./', type=str)
-    parser.add_argument('--batch-size', default=512, type=int)
-    parser.add_argument('--test-batch-size', default=512, type=int)
+    parser.add_argument('--batch-size', default=128, type=int)
+    parser.add_argument('--test-batch-size', default=128, type=int)
     parser.add_argument('--lstm-dim', default=256, type=int)
     parser.add_argument('--seq-len', default=32, type=int)
     parser.add_argument('--character-level', default=False, type=str2bool)
 
     args = parser.parse_args()
 
-    main(args.feature_type, args.language, args.main_dir, args.seq_len, args.batch_size,
-         args.test_batch_size, args.lstm_dim, args.character_level)
+    main(args.feature_type, args.language, args.domain, args.main_dir, args.seq_len,
+         args.batch_size, args.test_batch_size, args.lstm_dim, args.character_level)

@@ -16,7 +16,7 @@ def _append_to_main_dict(data, row_dict):
 
 def main():
     """Writes features to corpora folder."""
-    use('bhsa', hoist=globals(), check=True)
+    use('bhsa', hoist=globals())
 
     data = {
         'book_idx': [],
@@ -32,6 +32,8 @@ def main():
         'verbal_tense': [],
         'clause_type': [],
         'phrase_function': [],
+        'language': [],
+        'domain': []
     }
 
     all_books = {T.bookName(b).lower(): i for i, b in enumerate(F.otype.s('book'))}
@@ -66,7 +68,9 @@ def main():
                                 'word_number': F.nu.v(w),
                                 'verbal_tense': F.vt.v(w),
                                 'clause_type': F.typ.v(cl),
-                                'phrase_function': F.function.v(p)
+                                'phrase_function': F.function.v(p),
+                                'language': F.language.v(w),
+                                'domain': F.txt.v(cl)
                                 }
 
                             data = _append_to_main_dict(data, row_dict)
