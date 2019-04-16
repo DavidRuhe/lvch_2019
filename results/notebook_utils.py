@@ -113,7 +113,7 @@ def plot_dendogram_and_tsne(hidden_dict, title, predictions=None, pca_components
     plt.show()
 
     prose = ['genesis', 'exodus', 'leviticus', 'deuteronomy', 'joshua', 'judges', 'samuel', 'kings',
-             'daniel', 'ezra-nehemiah', 'chronicles']
+             'daniel', 'ezra-nehemiah', 'chronicles', 'esther']
 
     poetry = ['song_of_songs', 'ecclesiastes']
 
@@ -124,6 +124,7 @@ def plot_dendogram_and_tsne(hidden_dict, title, predictions=None, pca_components
     poetry_tsne = []
 
     for j, book in enumerate(hidden_dict):
+        print(book)
         if book in prose:
             prose_tsne.append(([tsne_results[i:i + cases_per_book]]))
         elif book in poetry:
@@ -135,10 +136,12 @@ def plot_dendogram_and_tsne(hidden_dict, title, predictions=None, pca_components
         i += cases_per_book
 
     prose_tsne = np.hstack(prose_tsne).squeeze(0)
-    poetry_tsne = np.hstack(poetry_tsne).squeeze(0)
+
+    if len(poetry_tsne) > 0:
+        poetry_tsne = np.hstack(poetry_tsne).squeeze(0)
+        plt.scatter(poetry_tsne[:, 0], poetry_tsne[:, 1], label='poetry', color='red')
 
     plt.scatter(prose_tsne[:, 0], prose_tsne[:, 1], label='prose', color='blue')
-    plt.scatter(poetry_tsne[:, 0], poetry_tsne[:, 1], label='poetry', color='red')
 
     plt.legend()
     plt.show()

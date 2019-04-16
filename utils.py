@@ -61,7 +61,8 @@ def get_texts(main_dir: str, language: str, feature_type: str, character_level: 
             assert domain in ['N', 'D', 'Q']
             df = df[df['domain'] == domain]
 
-            print(df.shape)
+    if 'language' in df.columns:
+        assert df.language.nunique() == 1
 
     texts = dict(df.groupby('book')[feature_type].apply(list))
 

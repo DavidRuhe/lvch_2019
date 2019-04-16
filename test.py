@@ -29,6 +29,10 @@ def main(feature_type: str, language: str, domain: str, main_dir: str, seq_len: 
 
     for book in texts:
         len_text = len(texts[book]) if character_level else len(texts[book].split())
+
+        if len_text < seq_len:
+            logger.warn(f"Requested seq_len larger than text length: {len_text} / {seq_len}")
+            continue
         rand_idx = np.random.randint(0, len_text - seq_len, batch_size)
 
         if character_level:
@@ -116,7 +120,7 @@ def main(feature_type: str, language: str, domain: str, main_dir: str, seq_len: 
 
 if __name__ == '__main__':
     parser = argparse.ArgumentParser()
-    parser.add_argument('--feature-type', default='verbal_stem', type=str)
+    parser.add_argument('--feature-type', default='clause_type', type=str)
     parser.add_argument('--domain', default=None, type=str)
     parser.add_argument('--language', default='hebrew', type=str)
     parser.add_argument('--main-dir', default='./', type=str)
