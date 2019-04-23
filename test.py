@@ -120,8 +120,8 @@ def main(feature_type: str, language: str, domain: str, main_dir: str, seq_len: 
 
 if __name__ == '__main__':
     parser = argparse.ArgumentParser()
-    parser.add_argument('--feature-type', default='phrase_function', type=str)
-    parser.add_argument('--domain', default='N', type=str)
+    parser.add_argument('--feature-type', default='word_pos', type=str)
+    parser.add_argument('--domain', default=None, type=str)
     parser.add_argument('--language', default='hebrew', type=str)
     parser.add_argument('--main-dir', default='./', type=str)
     parser.add_argument('--batch-size', default=64, type=int)

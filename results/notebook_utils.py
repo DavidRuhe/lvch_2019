@@ -8,6 +8,8 @@ from sklearn.manifold import TSNE
 from tqdm.auto import tqdm
 from lime.lime_text import LimeTextExplainer
 import seaborn as sns
+from matplotlib import cm
+
 
 
 def plot_dendogram_and_tsne(hidden_dict, title, predictions=None, pca_components=128):
@@ -103,11 +105,13 @@ def plot_dendogram_and_tsne(hidden_dict, title, predictions=None, pca_components
         all_predictions = np.concatenate([predictions[b] for b in predictions])
         unique_predicitons = np.unique(all_predictions)
 
+        pred_cmap = sns.color_palette('rainbow', n_colors=len(unique_predicitons))
+
         plt.figure(figsize=(10, 10))
 
-        for prediction in unique_predicitons:
+        for i, prediction in enumerate(unique_predicitons):
             pred_tsnes = tsne_results[all_predictions == prediction]
-            plt.scatter(pred_tsnes[:, 0], pred_tsnes[:, 1], label=prediction)
+            plt.scatter(pred_tsnes[:, 0], pred_tsnes[:, 1], label=prediction, color=pred_cmap[i])
 
     plt.legend()
     plt.show()
@@ -149,8 +153,8 @@ def plot_dendogram_and_tsne(hidden_dict, title, predictions=None, pca_components
     plt.figure(figsize=(10, 10))
 
     i = 0
-
     alpha = 0.3
+
     for j, book in enumerate(hidden_dict):
 
         sns.kdeplot(tsne_results[i:i + cases_per_book, 0],
