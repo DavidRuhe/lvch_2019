@@ -33,7 +33,7 @@ def main():
         'clause_type': [],
         'phrase_function': [],
         'language': [],
-        'domain': []
+        'type': []
     }
 
     all_books = {T.bookName(b).lower(): i for i, b in enumerate(F.otype.s('book'))}
@@ -70,13 +70,17 @@ def main():
                                 'clause_type': F.typ.v(cl),
                                 'phrase_function': F.function.v(p),
                                 'language': F.language.v(w),
-                                'domain': F.txt.v(cl)
-                                }
+                                'type': F.txt.v(cl),
+                            }
 
                             data = _append_to_main_dict(data, row_dict)
 
     data_df = pd.DataFrame(data)
+
+    data_df['domain'] = [typ[-1] for typ in data_df['type']]
+
     data_df.to_csv(os.path.join(MAIN_DIR, 'corpora', 'main_corpus.csv'), index=False)
+
 
 if __name__ == '__main__':
     main()

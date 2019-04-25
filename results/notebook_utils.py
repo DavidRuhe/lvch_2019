@@ -49,7 +49,7 @@ def plot_dendogram_and_tsne(hidden_dict, title, predictions=None, pca_components
             distances[(i, j)] = distance
             distances[(i, j)[::-1]] = distance
 
-    data_link = linkage(squareform(distances), metric=None, method='ward')
+    data_link = linkage(squareform(distances), metric=None, method='ward', optimal_ordering=True)
 
     dendrogram(data_link, labels=np.array(list(hidden_dict.keys())), orientation='right')
     plt.suptitle(title, fontweight='bold', fontsize=14)
