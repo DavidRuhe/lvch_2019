@@ -28,10 +28,12 @@ def main(feature_type: str, language: str, domain: str, main_dir: str, seq_len: 
     samples = {}
 
     for book in texts:
+        print(len(texts[book]))
         len_text = len(texts[book]) if character_level else len(texts[book].split())
 
         if len_text < seq_len:
-            logger.warn(f"Requested seq_len larger than text length: {len_text} / {seq_len}")
+            logger.warn(f"Requested seq_len larger than text length: {len_text} / {seq_len} "
+                             f"for {book} and feature type {feature_type}.")
             continue
         rand_idx = np.random.randint(0, len_text - seq_len, batch_size)
 
@@ -120,8 +122,8 @@ def main(feature_type: str, language: str, domain: str, main_dir: str, seq_len: 
 
 if __name__ == '__main__':
     parser = argparse.ArgumentParser()
-    parser.add_argument('--feature-type', default='word_number', type=str)
-    parser.add_argument('--domain', default='N', type=str)
+    parser.add_argument('--feature-type', default='clause_type', type=str)
+    parser.add_argument('--domain', default='Q', type=str)
     parser.add_argument('--language', default='hebrew', type=str)
     parser.add_argument('--main-dir', default='./', type=str)
     parser.add_argument('--batch-size', default=64, type=int)

@@ -66,6 +66,8 @@ def get_texts(main_dir: str, language: str, feature_type: str, character_level: 
 
     texts = dict(df.groupby('book')[feature_type].apply(list))
 
+    print(len(texts['ecclesiastes']))
+
     for book in texts:
         text = ' '.join(texts[book])
 
@@ -74,6 +76,8 @@ def get_texts(main_dir: str, language: str, feature_type: str, character_level: 
             text = text.translate(str.maketrans('', '', string.punctuation))
 
         texts[book] = text
+
+        print(book, len(texts[book].split()))
 
     return texts
 
