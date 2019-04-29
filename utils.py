@@ -58,7 +58,7 @@ def get_texts(main_dir: str, language: str, feature_type: str, character_level: 
         df = df[df['language'] == 'Hebrew']
 
         if domain:
-            assert domain in ['N', 'D', 'Q']
+            assert domain in ['N', 'D', 'Q', '?']
             df = df[df['domain'] == domain]
 
     if 'language' in df.columns:
