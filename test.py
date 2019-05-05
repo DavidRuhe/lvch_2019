@@ -86,7 +86,9 @@ def main(feature_type: str, language: str, domain: str, main_dir: str, seq_len: 
 
     for book in samples:
         seed = np.stack(samples[book])
+        print(seed.shape)
         hf, preds = generate_text(prediction_model, tokenizer, seed, get_hidden=True)
+        print(hf.shape)
         hiddens[book] = hf
         seeds[book] = seed
         preds = [tokenizer.ix_to_word[pred] for pred in preds]
@@ -119,14 +121,13 @@ def main(feature_type: str, language: str, domain: str, main_dir: str, seq_len: 
     logger.info(f"Succesfully saved predictions to {path_out}")
 
 
-
 if __name__ == '__main__':
     parser = argparse.ArgumentParser()
-    parser.add_argument('--feature-type', default='clause_type', type=str)
-    parser.add_argument('--domain', default='Q', type=str)
+    parser.add_argument('--feature-type', default='word', type=str)
+    parser.add_argument('--domain', default=None, type=str)
     parser.add_argument('--language', default='hebrew', type=str)
     parser.add_argument('--main-dir', default='./', type=str)
-    parser.add_argument('--batch-size', default=64, type=int)
+    parser.add_argument('--batch-size', default=512, type=int)
     parser.add_argument('--lstm-dim', default=256, type=int)
     parser.add_argument('--seq-len', default=32, type=int)
     parser.add_argument('--character-level', default=False, type=str2bool)

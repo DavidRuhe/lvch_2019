@@ -9,7 +9,7 @@ from tqdm.auto import tqdm
 from lime.lime_text import LimeTextExplainer
 import seaborn as sns
 from matplotlib import cm
-
+import pandas as pd
 
 
 def plot_dendogram_and_tsne(hidden_dict, title, predictions=None, pca_components=128):
@@ -22,41 +22,48 @@ def plot_dendogram_and_tsne(hidden_dict, title, predictions=None, pca_components
     pca_components: number of pca components to reduce to.
     """
 
-    cases_per_book = list(hidden_dict.values())[0].shape[0]
-
-    pca = PCA(n_components=pca_components)
-    pca.fit(np.concatenate([hidden_dict[book] for book in hidden_dict]))
-
-    print('Variance PCA: {}'.format(np.sum(pca.explained_variance_ratio_)))
-
-    assert np.sum(pca.explained_variance_ratio_) > 0.85
+    hidden_dict_means = {}
 
     for book in hidden_dict:
-        hidden_dict[book] = pca.transform(hidden_dict[book])
+        hidden_dict_means[book] = np.mean(hidden_dict[book], axis=0)
 
-    distances = np.empty((len(hidden_dict), len(hidden_dict)), dtype=np.float32)
 
-    prob_matrices = [hidden_dict[book] for book in hidden_dict]
+    # pca = PCA(n_components=pca_components)
+    # pca.fit(np.concatenate([hidden_dict[book] for book in hidden_dict]))
+    #
+    # print('Variance PCA: {}'.format(np.sum(pca.explained_variance_ratio_)))
+    #
+    # assert np.sum(pca.explained_variance_ratio_) > 0.85
+    #
+    # for book in hidden_dict:
+    #     hidden_dict[book] = pca.transform(hidden_dict[book])
 
-    for i in range(len(distances)):
-        for j in range(i, len(distances)):
+    # distances = np.empty((len(hidden_dict), len(hidden_dict)), dtype=np.float32)
+    #
+    # prob_matrices = [hidden_dict[book] for book in hidden_dict]
+    #
+    # for i in range(len(distances)):
+    #     for j in range(i, len(distances)):
+    #
+    #         mat_a = prob_matrices[i]
+    #         mat_b = prob_matrices[j]
+    #
+    #         distance = np.linalg.norm(mat_a - mat_b)
+    #
+    #         distances[(i, j)] = distance
+    #         distances[(i, j)[::-1]] = distance
+    #
 
-            mat_a = prob_matrices[i]
-            mat_b = prob_matrices[j]
-
-            distance = np.linalg.norm(mat_a - mat_b)
-
-            distances[(i, j)] = distance
-            distances[(i, j)[::-1]] = distance
-
-    data_link = linkage(squareform(distances), metric=None, method='ward', optimal_ordering=True)
-
+    df_mean = pd.DataFrame(hidden_dict_means)
+    data_link = linkage(df_mean.T, method='ward', optimal_ordering=True)
     dendrogram(data_link, labels=np.array(list(hidden_dict.keys())), orientation='right')
     plt.suptitle(title, fontweight='bold', fontsize=14)
     plt.show()
 
+    cases_per_book = 64
+    hidden_dict_samples = [hidden_dict[book][:cases_per_book] for book in hidden_dict]
     tsne = TSNE(n_components=2, verbose=1)
-    tsne_results = tsne.fit_transform(np.concatenate(prob_matrices))
+    tsne_results = tsne.fit_transform(np.concatenate(hidden_dict_samples))
 
     plt.figure(figsize=(10, 10))
     i = 0
@@ -102,7 +109,9 @@ def plot_dendogram_and_tsne(hidden_dict, title, predictions=None, pca_components
     plt.show()
 
     if predictions:
-        all_predictions = np.concatenate([predictions[b] for b in predictions])
+        pred_dict_samples = [predictions[book][:cases_per_book] for book in predictions]
+
+        all_predictions = np.concatenate(pred_dict_samples)
         unique_predicitons = np.unique(all_predictions)
 
         pred_cmap = sns.color_palette('rainbow', n_colors=len(unique_predicitons))
